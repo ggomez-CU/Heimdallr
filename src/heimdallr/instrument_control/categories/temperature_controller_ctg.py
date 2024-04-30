@@ -2,7 +2,7 @@ from heimdallr.base import *
 
 class PIDTemperatureControllerCtg(Driver):
 	
-	def __init__(self, address:str, log:LogFile):
+	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log)
 	
 	def set_temp(self, temp_K:float, channel:int=1):

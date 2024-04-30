@@ -2,7 +2,7 @@ from heimdallr.base import *
 
 class OscilloscopeCtg(Driver):
 	
-	def __init__(self, address:str, log:LogFile):
+	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log)
 	
 	def set_div_time(self, time_s:float):

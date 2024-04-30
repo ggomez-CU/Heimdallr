@@ -5,7 +5,7 @@ from heimdallr.instrument_control.categories.all_ctgs import *
 
 class LakeShoreModel335(PIDTemperatureControllerCtg):
 
-	def __init__(self, address:str, log:LogFile):
+	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log)
 	
 	def set_setpoint(self, temp_K:float, channel:int=1):

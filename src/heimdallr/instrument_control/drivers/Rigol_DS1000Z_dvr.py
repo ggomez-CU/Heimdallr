@@ -5,7 +5,7 @@ from heimdallr.instrument_control.categories.all_ctgs import *
 
 class RigolDS1000Z(OscilloscopeCtg):
 
-	def __init__(self, address:str, log:LogFile):
+	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log)
 	
 	def set_div_time(self, time_s:float):

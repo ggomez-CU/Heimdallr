@@ -1,5 +1,5 @@
 import pyvisa as pv
-from pylogfile import *
+from pyLogPile import *
 import numpy as np
 
 class Identifier:
@@ -12,7 +12,7 @@ class Identifier:
 
 class Driver:
 	
-	def __init__(self, address:str, log:LogFile):
+	def __init__(self, address:str, log:LogPile):
 		
 		self.address = address
 		self.log = log
