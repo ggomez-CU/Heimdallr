@@ -3,7 +3,7 @@
 
 from heimdallr.instrument_control.categories.all_ctgs import *
 
-class KeysightSSG(RFSignalGeneratorCtg):
+class Keysight8360L(RFSignalGeneratorCtg):
 
 	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log)

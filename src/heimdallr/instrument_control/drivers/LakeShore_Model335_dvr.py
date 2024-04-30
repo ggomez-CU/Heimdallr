@@ -24,7 +24,7 @@ class LakeShoreModel335(PIDTemperatureControllerCtg):
 		# Print a warning if any variable was adjusted
 		if P != P or I != I or D != D:
 			self.log.error(f"Did not apply command. Instrument limits values to 0.1-1000 and this range was violated.")
-		
+			return
 		self.write(f"PID {channel}")
 	
 	def get_pid(self, channel:int=1):

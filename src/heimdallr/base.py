@@ -1,5 +1,5 @@
 import pyvisa as pv
-from pyLogPile import *
+from pylogfile import *
 import numpy as np
 
 class Identifier:
@@ -27,7 +27,7 @@ class Driver:
 	def connect(self):
 		
 		try:
-			self.inst = self.rm.open_resource(self.address)
+			self.inst = self.rm.open_resource(self.address, read_termination='\r')
 			self.online = True
 		except Exception as e:
 			self.log.error(f"Failed to connect to address: {self.address}. ({e})")

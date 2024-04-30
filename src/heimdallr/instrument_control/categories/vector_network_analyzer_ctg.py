@@ -7,8 +7,8 @@ class VectorNetworkAnalyzerCtg(Driver):
 	MEAS_S12 = "meas-s12"
 	MEAS_S22 = "meas-s22"
 	
-	def __init__(self):
-		pass
+	def __init__(self, address:str, log:LogPile):
+		super().__init__(address, log)
 	
 	def set_freq_start(self, f_Hz:float, channel:int=1):
 		pass
