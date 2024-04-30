@@ -89,3 +89,19 @@ def str01_to_bool(val:str):
 		return True
 	else:
 		return False
+
+def bool_to_ONFOFF(val:bool):
+	''' Converts a boolean value to 0/1 as a string '''
+	
+	if val:
+		return "ON"
+	else:
+		return "OFF"
+
+def str_to_bool(val:str):
+	''' Converts the string 0/1 or ON/OFF or TRUE/FALSE to a boolean '''
+	
+	if ('1' in val) or ('ON' in val.upper()) or ('TRUE' in val.upper()):
+		return True
+	else:
+		return False

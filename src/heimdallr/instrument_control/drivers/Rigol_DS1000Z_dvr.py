@@ -3,7 +3,7 @@
 
 from heimdallr.instrument_control.categories.all_ctgs import *
 
-class Rigol_DS1000Z(OscilloscopeCtg):
+class RigolDS1000Z(OscilloscopeCtg):
 
 	def __init__(self, address:str, log:LogFile):
 		super().__init__(address, log)
