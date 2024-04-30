@@ -1,7 +1,8 @@
-"""RIGOL’s 1000Z Series Digital Oscilloscope
+""" Keysight 8360L Series Swept CW Generator
 """
 
-from heimdallr.instrument_control.categories.all_ctgs import *
+from heimdallr.base import *
+from heimdallr.instrument_control.categories.rf_signal_generator_ctg import *
 
 class Keysight8360L(RFSignalGeneratorCtg):
 

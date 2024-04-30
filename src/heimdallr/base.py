@@ -27,7 +27,7 @@ class Driver:
 	def connect(self):
 		
 		try:
-			self.inst = self.rm.open_resource(self.address, read_termination='\r')
+			self.inst = self.rm.open_resource(self.address)
 			self.online = True
 		except Exception as e:
 			self.log.error(f"Failed to connect to address: {self.address}. ({e})")
