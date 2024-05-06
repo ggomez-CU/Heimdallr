@@ -4,7 +4,7 @@
 from heimdallr.base import *
 from heimdallr.instrument_control.categories.rf_signal_generator_ctg import *
 
-class Keysight8360L(RFSignalGeneratorCtg):
+class AgilentE4400(RFSignalGeneratorCtg):
 
 	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log)
