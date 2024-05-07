@@ -1,8 +1,10 @@
-''' Driver for PNA E8364B VNA
+''' Driver for Siglent SSA3000X Spectrum Analyzers
 
 * Only supports a single window
 
 Manual: https://www.testworld.com/wp-content/uploads/user-guide-help-agilent-e8362b-e8363b-e8364b-e8361a-n5230a-n5242a-pna-series-microwave-network-analyzers.pdf
+	or
+	    https://siglentna.com/wp-content/uploads/dlm_uploads/2017/10/SSA3000X_ProgrammingGuide_PG0703X_E04A.pdf
 '''
 
 import array
@@ -16,7 +18,7 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 	SWEEP_OFF = "sweep-off"
 	
 	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log)
+		super().__init__(address, log, expected_idn="Siglent Technologies,SSA30")
 		
 		self.trace_lookup = {}
 	
@@ -54,14 +56,6 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 	def get_res_bandwidth(self, channel:int=1):
 		return float(self.query(f"SENS:BWID:RES?"))
 	
-	# def set_num_points(self, points:int, channel:int=1):
-	# 	self.write(f"SENS{channel}:SWEEP:POIN {points}")
-	# def get_num_points(self, channel:int=1):
-	# 	return int(self.query(f"SENS{channel}:SWEEP:POIN?"))
-	
-	# def get_sweep_time(self):
-	# 	return float(self.query(f"SENS:ACQ:TIME?"))
-	
 	def set_continuous_trigger(self, enable:bool):
 		self.write(f"INIT:CONT {bool_to_ONFOFF(enable)}")
 	def get_continuous_trigger(self):
@@ -70,38 +64,16 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 	def send_manual_trigger(self):
 		self.write(f"INIT:IMM")
 	
-	# def send_pause_trigger(self):
-	# 	self.write(f"INIT:PAUSE")
-	# def send_resume_trigger(self):
-	# 	self.write(f":INIT:RESUME")
-	
-	# def clear_traces(self):
-	# 	self.write(f"CALC:PAR:DEL:ALL")
-	
-	# def add_trace(self, channel:int, trace:int, measurement:str):
-		
-	# 	# Get measurement code
-	# 	try:
-	# 		meas_code = self.measurement_codes[measurement]
-	# 	except:
-	# 		self.log.error(f"Unrecognized measurement!")
-	# 		return
-		
-	# 	# Check that trace doesn't already exist
-	# 	if trace in self.trace_lookup.keys():
-	# 		self.log.error(f"Cannot add trace. Trace number {trace} already exists.")
-		
-	# 	# Create name and save
-	# 	trace_name = f"trace{trace}"
-	# 	self.trace_lookup[trace] = trace_name
-		
-	# 	# Create measurement - will not display yet
-	# 	self.write(f"CALC{channel}:PAR:DEF '{trace_name}', {meas_code}")
-		
-	# 	# Create a trace and assoc. with measurement
-	# 	self.write(f"DISP:WIND:TRAC{trace}:FEED '{trace_name}'")
-	
 	def get_trace_data(self, trace:int, use_ascii_transfer:bool=False):
+		''' Returns the data of the trace in a standard waveform dict, which
+		
+		has keys:
+			* x: X data list (float)
+			* y: Y data list (float)
+			* x_units: Units of x-axis
+			* y_units: UNits of y-axis
+		
+		'''
 		
 		# Make sure trace is in range
 		count = int(max(1, min(trace, 3)))
@@ -140,20 +112,24 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 			# Skip first 4 bytes (number of elements) and last byte (newline)
 			float_data = list(array.array('f', data_raw[4:-1]))
 		
+		# Generate time array
+		f_list = list(np.linspace(self.get_freq_start(), self.get_freq_end(), len(float_data)))
+		
+		out_data = {'x':f_list, 'y':float_data, 'x_units':'Hz', 'y_units':'dBm'}
 		
 		# Convert Y-unit to dBm
-		return float_data
+		return out_data
 		
-		trace_name = self.trace_lookup[trace]
+		# trace_name = self.trace_lookup[trace]
 		
-		# Select the specified measurement/trace
-		self.write(f"CALC{channel}:PAR:SEL {trace_name}")
+		# # Select the specified measurement/trace
+		# self.write(f"CALC{channel}:PAR:SEL {trace_name}")
 		
-		# Set data format
-		self.write(f"FORM:DATA REAL,64")
+		# # Set data format
+		# self.write(f"FORM:DATA REAL,64")
 		
-		# Query data
-		return self.query(f"CALC{channel}:DATA? SDATA")
+		# # Query data
+		# return self.query(f"CALC{channel}:DATA? SDATA")
 		
 	
 		

@@ -7,7 +7,9 @@ from heimdallr.instrument_control.categories.rf_signal_generator_ctg import *
 class Keysight8360L(RFSignalGeneratorCtg):
 
 	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log)
+		# Example: "HEWLETT-PACKARD,83650L,3844A00476,19 JAN 00\n"
+		super().__init__(address, log, expected_idn="HEWLETT-PACKARD,836")
+		
 	
 	def set_power(self, p_dBm:float):
 		self.write(f":POW:LEV {p_dBm}")
