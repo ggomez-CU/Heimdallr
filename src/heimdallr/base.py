@@ -1,6 +1,7 @@
 import pyvisa as pv
 from pylogfile import *
 import numpy as np
+import time
 
 class Identifier:
 	
@@ -39,6 +40,9 @@ class Driver:
 			self.log.error(f"Failed to connect to address: {self.address}. ({e})")
 			self.online = False
 	
+	def preset(self):
+		self.write("*RST")
+	
 	def query_id(self):
 		''' Checks the IDN of the instrument, and makes sure it matches up.'''
 		
@@ -68,6 +72,40 @@ class Driver:
 		
 		self.inst.close()
 	
+	def wait_ready(self, check_period:float=0.1, timeout_s:float=None):
+		''' Waits until all previous SCPI commands have completed. *CLS 
+		must have been sent prior to the commands in question.
+		
+		Set timeout to None for no timeout.
+		
+		Returns true if operation completed, returns False if timeout occured.'''
+		
+		self.write(f"*OPC")
+		
+		# Check ESR
+		esr_buffer = int(self.query(f"*ESR?"))
+		
+		t0 = time.time()
+		
+		# Loop while ESR bit one is not set
+		while esr_buffer == 0:
+			
+			# Check register state
+			esr_buffer = int(self.query(f"*ESR?"))
+			
+			# Wait prescribed time
+			time.sleep(check_period)
+			
+			# Timeout handling
+			if (timeout_s is not None) and (time.time() - t0 >= timeout_s):
+				break
+		
+		# Return
+		if esr_buffer > 0:
+			return True
+		else:
+			return False
+		
 	def write(self, cmd:str):
 		''' Sends a SCPI command via PyVISA'''
 		
