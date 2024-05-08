@@ -1,20 +1,18 @@
-''' Driver for Siglent SSA3000X Spectrum Analyzers
+''' Driver for Rohde & Schwarz FSQ series Spectrum Analyzers
 
-* Only supports a single window
+* Only supports a single window (Referred to as Screen A in R&S documentation. The instruments supports screens A&B.)
 
-Manual: https://www.testworld.com/wp-content/uploads/user-guide-help-agilent-e8362b-e8363b-e8364b-e8361a-n5230a-n5242a-pna-series-microwave-network-analyzers.pdf
-	or
-	    https://siglentna.com/wp-content/uploads/dlm_uploads/2017/10/SSA3000X_ProgrammingGuide_PG0703X_E04A.pdf
+Manual: https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/f/fsq_1/FSQ_OperatingManual_en_02.pdf
 '''
 
 import array
 from heimdallr.base import *
 from heimdallr.instrument_control.categories.spectrum_analyzer_ctg import *
 
-class SiglentSSA3000X(SpectrumAnalyzerCtg):
+class RohdeSchwarzFSQ(SpectrumAnalyzerCtg):
 	
 	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log, expected_idn="Siglent Technologies,SSA30")
+		super().__init__(address, log, expected_idn="")
 		
 		self.trace_lookup = {}
 	
@@ -29,11 +27,12 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 		return float(self.query(f"SENS:FREQ:STOP?"))
 	
 	def set_ref_level(self, ref_dBm:float):
-		ref_dBm = max(-100, min(ref_dBm, 30))
+		ref_dBm = max(-130, min(ref_dBm, 30))
 		if ref_dBm != ref_dBm:
-			self.log.error(f"Did not apply command. Instrument limits values from -100 to 30 dBm and this range was violated.")
+			self.log.error(f"Did not apply command. Instrument limits values from -130 to 30 dBm and this range was violated.")
 			return
-		self.write(f"DISP:WIND:TRAC:Y:RLEV {ref_dBm} DBM")
+		self.write(f"CALC:UNIT:POW dBm") # Set units to DBM (Next command refers to this unit)
+		self.write(f"DISP:WIND:TRAC:Y:RLEV {ref_dBm}")
 	def get_ref_level(self):
 		return float(self.query("DISP:WIND:TRAC:Y:RLEV?"))
 	
@@ -43,14 +42,17 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 		if step_dB != step_dB:
 			self.log.error(f"Did not apply command. Instrument limits values from 1 to 20 dB and this range was violated.")
 			return
-		self.write(f":DISP:WIND:TRAC:Y:SCAL:PDIV {step_dB} DB")
+		
+		full_span_dB = step_dB*10 #Sets total span, not per div, so must multiply by num. divisions (10)
+		self.write(f":DISP:WIND:TRAC:Y:SCAL {full_span_dB} DB") 
 	def get_y_div(self):
-		return float(self.query(f":DISP:WIND:TRAC:Y:SCAL:PDIV?"))
+		full_span_dB = float(self.query(f":DISP:WIND:TRAC:Y:SCAL?"))
+		return full_span_dB/10
 	
 	def set_res_bandwidth(self, rbw_Hz:float, channel:int=1):
-		self.write(f"SENS:BWID:RES {rbw_Hz}")
+		self.write(f"SENS:BAND:BWID:RES {rbw_Hz} Hz")
 	def get_res_bandwidth(self, channel:int=1):
-		return float(self.query(f"SENS:BWID:RES?"))
+		return float(self.query(f"SENS:BAND:BWID:RES?"))
 	
 	def set_continuous_trigger(self, enable:bool):
 		self.write(f"INIT:CONT {bool_to_ONFOFF(enable)}")
@@ -83,7 +85,7 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 		# Run ASCII transfer if requested
 		if use_ascii_transfer:
 			
-			self.write(f"FORMAT:TRACE:DATA ASCII") # Set format to ASCII
+			self.write(f"FORMAT:DATA ASCII") # Set format to ASCII
 			data_raw = self.query(f"TRACE:DATA? {trace}") # Get raw data
 			str_list = data_raw.split(",") # Split at each comma
 			del str_list[-1] # Remove last element (newline)
@@ -91,11 +93,11 @@ class SiglentSSA3000X(SpectrumAnalyzerCtg):
 			
 		else:
 		
-			# Set data format - Real 64 binary data - in current Y unit
-			self.write(f"FORMAT:TRACE:DATA REAL")
+			# Set data format - Real 32 binary data - in current Y unit
+			self.write(f"FORMAT:DATA REAL")
 			
 			# Read data - ask for data
-			self.write(f"TRACE:DATA? {trace}")
+			self.write(f"TRACE:DATA? TRACE{trace}")
 			data_raw = []
 			while True:
 				try:

@@ -2,6 +2,10 @@ from heimdallr.base import *
 
 class SpectrumAnalyzerCtg(Driver):
 	
+	SWEEP_CONTINUOUS = "sweep-continuous"
+	SWEEP_SINGLE = "sweep-single"
+	SWEEP_OFF = "sweep-off"
+	
 	def __init__(self, address:str, log:LogPile, expected_idn:str=""):
 		super().__init__(address, log, expected_idn=expected_idn)
 	
