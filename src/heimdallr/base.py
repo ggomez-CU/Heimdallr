@@ -178,3 +178,100 @@ def str_to_bool(val:str):
 		return True
 	else:
 		return False
+
+def s2hms(seconds):
+	''' Converts a value in seconds to a tuple of hours, minutes, seconds.'''
+	
+	# Convert seconds to minutes
+	min = np.floor(seconds/60)
+	seconds -= min*60
+	
+	# Convert minutes to hours
+	hours = np.floor(min/60)
+	min -= hours*60
+	
+	return (hours, min, seconds)
+
+
+def interpret_range(rd:dict, print_err=False):
+	''' Accepts a dictionary defining a sweep list/range, and returns a list of the values. Returns none
+	if the format is invalid.
+	
+	* Dictionary must contain key 'type' specifying the string 'list' or 'range'.
+	* Dictionary must contain a key 'unit' specifying a string with the unit.
+	* If type=list, dictionary must contain key 'values' with a list of each value to include.
+	* If type=range, dictionary must contain keys start, end, and step each with a float value
+	  specifying the iteration conditions for the list.
+	
+	Example list dict (in JSON format):
+		 {
+			"type": "list",
+			"unit": "dBm",
+			"values": [0]
+		}
+		
+	Example range dict (in JSON format):
+		{
+			"type": "range",
+			"unit": "Hz",
+			"start": 9.8e9,
+			"step": 1e6,
+			"end": 10.2e9
+		}
+	
+	'''
+	K = rd.keys()
+	
+	# Verify type parameter
+	if "type" not in K:
+		if print_err:
+			print(f"    {Fore.RED}Key 'type' not present.{Style.RESET_ALL}")
+		return None
+	elif type(rd['type']) != str:
+			if print_err:
+				print(f"    {Fore.RED}Key 'type' wrong type.{Style.RESET_ALL}")
+			return None
+	elif rd['type'] not in ("list", "range"):
+		if print_err:
+			print(f"    {Fore.RED}Key 'type' corrupt.{Style.RESET_ALL}")
+		return None
+	
+	# Verify unit parameter
+	if "unit" not in K:
+		if print_err:
+			print(f"    {Fore.RED}Key 'unit' not present.{Style.RESET_ALL}")
+		return None
+	elif type(rd['unit']) != str:
+		if print_err:
+			print(f"    {Fore.RED}Key 'unit' wrong type.{Style.RESET_ALL}")
+		return None
+	elif rd['unit'] not in ("dBm", "V", "Hz"):
+		if print_err:
+			print(f"    {Fore.RED}Key 'unit' corrupt.{Style.RESET_ALL}")
+		return None
+	
+	# Read list type
+	if rd['type'] == 'list':
+		try:
+			vals = rd['values']
+		except:
+			if print_err:
+				print(f"    {Fore.RED}Failed to read value list.{Style.RESET_ALL}")
+			return None
+	elif rd['type'] == 'range':
+		try:
+			
+			start = int(rd['start']*1e6)
+			end = int(rd['end']*1e6)+1
+			step = int(rd['step']*1e6)
+			
+			vals = np.array(range(start, end, step))/1e6
+			
+			vals = list(vals)
+			
+		except Exception as e:
+			if print_err:
+				print(f"    {Fore.RED}Failed to process sweep values. ({e}){Style.RESET_ALL}")
+			return None
+	
+	return vals
