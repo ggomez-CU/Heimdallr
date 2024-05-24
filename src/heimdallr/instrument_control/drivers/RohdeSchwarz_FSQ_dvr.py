@@ -12,7 +12,7 @@ from heimdallr.instrument_control.categories.spectrum_analyzer_ctg import *
 class RohdeSchwarzFSQ(SpectrumAnalyzerCtg):
 	
 	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log, expected_idn="")
+		super().__init__(address, log, expected_idn="Rohde&Schwarz,FSQ-") # Example 'Rohde&Schwarz,FSQ-26,200334/026,4.75\n'
 		
 		self.trace_lookup = {}
 	
@@ -50,9 +50,9 @@ class RohdeSchwarzFSQ(SpectrumAnalyzerCtg):
 		return full_span_dB/10
 	
 	def set_res_bandwidth(self, rbw_Hz:float, channel:int=1):
-		self.write(f"SENS:BAND:BWID:RES {rbw_Hz} Hz")
+		self.write(f"SENS:BAND:RES {rbw_Hz} Hz")
 	def get_res_bandwidth(self, channel:int=1):
-		return float(self.query(f"SENS:BAND:BWID:RES?"))
+		return float(self.query(f"SENS:BAND:RES?"))
 	
 	def set_continuous_trigger(self, enable:bool):
 		self.write(f"INIT:CONT {bool_to_ONFOFF(enable)}")
@@ -62,7 +62,7 @@ class RohdeSchwarzFSQ(SpectrumAnalyzerCtg):
 	def send_manual_trigger(self):
 		self.write(f"INIT:IMM")
 	
-	def get_trace_data(self, trace:int, use_ascii_transfer:bool=False):
+	def get_trace_data(self, trace:int, use_ascii_transfer:bool=False, use_fast_binary:bool=True):
 		''' Returns the data of the trace in a standard waveform dict, which
 		
 		has keys:
@@ -86,30 +86,58 @@ class RohdeSchwarzFSQ(SpectrumAnalyzerCtg):
 		if use_ascii_transfer:
 			
 			self.write(f"FORMAT:DATA ASCII") # Set format to ASCII
-			data_raw = self.query(f"TRACE:DATA? {trace}") # Get raw data
+			data_raw = self.query(f"TRACE:DATA? TRACE{trace}") # Get raw data
 			str_list = data_raw.split(",") # Split at each comma
 			del str_list[-1] # Remove last element (newline)
 			float_data = [float(x) for x in str_list] # Convert to float
 			
 		else:
+			#  Example data would be:
+			#      #42500<data block of 2500 4 byte floats>
+			#	   THe '#4' indicates 4 bytes of data for size of packet
+			#      The 2500 indicates 2500 floats, or 2500*4 bytes
 		
 			# Set data format - Real 32 binary data - in current Y unit
 			self.write(f"FORMAT:DATA REAL")
 			
-			# Read data - ask for data
-			self.write(f"TRACE:DATA? TRACE{trace}")
-			data_raw = []
-			while True:
-				try:
-					byte = self.inst.read_bytes(1)
-					data_raw.append(byte)
-				except:
-					break
-			data_raw = data_raw[0]
+			if not use_fast_binary:
 			
-			# Skip first 4 bytes (number of elements) and last byte (newline)
-			float_data = list(array.array('f', data_raw[4:-1]))
-		
+				# Read data - ask for data
+				self.write(f"TRACE:DATA? TRACE{trace}")
+				data_raw = bytearray()
+				while True:
+					try:
+						byte = self.inst.read_bytes(1)
+						data_raw += byte
+					except:
+						break
+				
+				# Skip first 6 bytes (number of elements) and last byte (newline)
+				float_data = list(array.array('f', data_raw[6:-1]))
+				
+			else:
+				
+				# Read data - ask for data
+				self.write(f"TRACE:DATA? TRACE{trace}")
+				data_raw = bytearray()
+				
+				# Get size of size of packet block (ie. convert #4 -> (int)4 )
+				byte = self.inst.read_bytes(2)
+				data_raw += byte
+				digits_in_size_num = int(data_raw[1:2])
+				
+				# Read size of packet
+				byte = self.inst.read_bytes(digits_in_size_num)
+				data_raw += byte
+				packet_size = int(data_raw[2:2+digits_in_size_num])
+				
+				#Read entire packet
+				byte = self.inst.read_bytes(packet_size+1)
+				data_raw += byte
+				
+				# Skip first X bytes (number of elements) and last byte (newline)
+				float_data = list(array.array('f', data_raw[2+digits_in_size_num:-1]))
+				
 		# Generate time array
 		f_list = list(np.linspace(self.get_freq_start(), self.get_freq_end(), len(float_data)))
 		
