@@ -59,7 +59,9 @@ class RohdeSchwarzFSQ(SpectrumAnalyzerCtg):
 	def get_continuous_trigger(self):
 		return str_to_bool(self.query(f"INIT:CONT?"))
 	
-	def send_manual_trigger(self):
+	def send_manual_trigger(self, send_cls:bool=True):
+		if send_cls:
+			self.write("*CLS")
 		self.write(f"INIT:IMM")
 	
 	def get_trace_data(self, trace:int, use_ascii_transfer:bool=False, use_fast_binary:bool=True):
