@@ -2,8 +2,8 @@ from heimdallr.base import *
 
 class OscilloscopeCtg(Driver):
 	
-	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log)
+	def __init__(self, address:str, log:LogPile, expected_idn=""):
+		super().__init__(address, log, expected_idn=expected_idn)
 	
 	def set_div_time(self, time_s:float):
 		pass
@@ -24,4 +24,30 @@ class OscilloscopeCtg(Driver):
 		pass
 	
 	def get_waveform(self, channel:int):
+		pass
+
+class Oscilloscope2Ctg(OscilloscopeCtg):
+	
+	# Measurement options
+	MEAS_VMAX = 0
+	MEAS_VMIN = 1
+	MEAS_VAVG = 2
+	MEAS_VPP  = 3
+	MEAS_FREQ = 4
+	
+	# Statistics options for measurement options
+	STAT_NONE = 0
+	STAT_AVG = 1
+	STAT_MAX = 2
+	STAT_MIN = 3
+	STAT_CURR = 4
+	STAT_STD = 5
+	
+	def __init__(self, address:str, log:LogPile, expected_idn=""):
+		super().__init__(address, log, expected_idn=expected_idn)
+	
+	def add_measurement(self):
+		pass
+	
+	def get_measurement(self):
 		pass
