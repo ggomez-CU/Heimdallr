@@ -58,7 +58,7 @@ class Driver:
 				return
 			
 			# Check if model is right
-			if self.expected_idn in self.id.idn_model:
+			if self.expected_idn.upper() in self.id.idn_model.upper():
 				self.verified_hardware = True
 				self.log.debug(f"Hardware verification >PASSED<", detail=f"Received string: {self.id.idn_model}")
 			else:
