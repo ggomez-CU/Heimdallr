@@ -2,6 +2,7 @@ import pyvisa as pv
 from pylogfile import *
 import numpy as np
 import time
+import inspect
 
 class Identifier:
 	
@@ -10,6 +11,50 @@ class Identifier:
 		self.ctg = "" # Category class of driver
 		self.dvr = "" # Driver class
 		self.name = "" # Rich name provided by user (optional)
+
+class RemoteInstrument:
+	''' Class to represent an instrument driven by another host on this network. This
+	class allows remote clients to control the instrument, despite not having a 
+	connection or driver locally.
+	'''
+	
+	def __init__(self):
+		self.net_id = "RohdeSchwarz-FSQ"
+		self.client_agent = None
+	
+	def remote_call(self, func_name:str, *args, **kwargs):
+		''' Calls the function 'func_name' of a remote instrument '''
+		
+		arg_str = ""
+		for a in args:
+			arg_str = arg_str + f"{a} "
+		for key, value in kwargs.items():
+			arg_str = arg_str + f"{key}:{value} "
+		
+		print(f"Initializing remote call: function = {func_name}, arguments = {arg_str} ")
+
+def RemoteFunction(func):
+	'''Decorator to allow empty functions to call
+	their remote counterparts'''
+	
+	def wrapper(self, *args, **kwargs):
+		self.remote_call(func.__name__, *args, **kwargs)
+		func(self, *args, **kwargs)
+	return wrapper
+
+class SpectrumAnalyzerRemote(RemoteInstrument):
+	
+	def __init__(self):
+		super().__init__()
+	
+	# Without the decorator, it looks like this
+	def set_freq_start(self, f_Hz:float, channel:int=1):
+		self.remote_call('set_freq_start', f_Hz, channel)
+	
+	# With the decorator, it looks like this
+	@RemoteFunction
+	def set_freq_end(self, f_Hz:float, channel:int=1):
+		pass
 
 class Driver:
 	
