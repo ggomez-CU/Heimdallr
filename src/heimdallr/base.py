@@ -58,10 +58,11 @@ class SpectrumAnalyzerRemote(RemoteInstrument):
 
 class Driver:
 	
-	def __init__(self, address:str, log:LogPile, expected_idn:str=""):
+	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True):
 		
 		self.address = address
 		self.log = log
+		self.is_scpi = is_scpi
 		
 		self.id = Identifier()
 		self.expected_idn = expected_idn 
@@ -74,6 +75,12 @@ class Driver:
 	
 	def connect(self, check_id:bool=True):
 		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default connect() function, instrument does recognize SCPI commands.")
+			return
+		
+		# Attempt to connect
 		try:
 			self.inst = self.rm.open_resource(self.address)
 			self.online = True
@@ -86,10 +93,21 @@ class Driver:
 			self.online = False
 	
 	def preset(self):
+		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default preset() function, instrument does recognize SCPI commands.")
+			return
+		
 		self.write("*RST")
 	
 	def query_id(self):
 		''' Checks the IDN of the instrument, and makes sure it matches up.'''
+		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default query_id() function, instrument does recognize SCPI commands.")
+			return
 		
 		# Query IDN model
 		self.id.idn_model = self.query("*IDN?")
@@ -115,6 +133,11 @@ class Driver:
 		
 	def close(self):
 		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default close() function, instrument does recognize SCPI commands.")
+			return
+		
 		self.inst.close()
 	
 	def wait_ready(self, check_period:float=0.1, timeout_s:float=None):
@@ -124,6 +147,11 @@ class Driver:
 		Set timeout to None for no timeout.
 		
 		Returns true if operation completed, returns False if timeout occured.'''
+		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default wait_ready() function, instrument does recognize SCPI commands.")
+			return
 		
 		self.write(f"*OPC")
 		
@@ -154,9 +182,15 @@ class Driver:
 	def write(self, cmd:str):
 		''' Sends a SCPI command via PyVISA'''
 		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default write() function, instrument does recognize SCPI commands.")
+			return
+		
 		if not self.online:
 			self.log.warning(f"Cannot write when offline. ()")
-		
+			return
+			
 		try:
 			self.inst.write(cmd)
 		except Exception as e:
@@ -168,6 +202,11 @@ class Driver:
 	
 	def read(self):
 		''' Reads via PyVISA'''
+		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default read() function, instrument does recognize SCPI commands.")
+			return
 		
 		if not self.online:
 			self.log.warning(f"Cannot write when offline. ()")
@@ -181,6 +220,11 @@ class Driver:
 	
 	def query(self, cmd:str):
 		''' Querys a command via PyVISA'''
+		
+		# Abort if not an SCPI instrument
+		if not self.is_scpi:
+			self.log.error(f"Cannot use default query() function, instrument does recognize SCPI commands.")
+			return
 		
 		if not self.online:
 			self.log.warning(f"Cannot write when offline. ()")

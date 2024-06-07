@@ -14,7 +14,7 @@ class RohdeSchwarzNRP(RFPowerSensor):
 		
 	def set_meas_frequency(self, f_Hz:float):
 		self.write(f"SENSE:FREQUENCY {f_Hz}")
-	def get_meas_frequency(self):
+	def get_meas_frequency(self) -> float:
 		return float(self.query(f"SENSE:FREQUENCY?"))
 	
 	# def send_autoscale(self):
