@@ -23,6 +23,7 @@ This is going to be the table of contents.
    
    overview.md
    installation
+   modules
 
 
 
