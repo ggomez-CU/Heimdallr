@@ -97,8 +97,6 @@ class RigolDS1000Z(Oscilloscope2Ctg):
 			return
 		src_str = f"CHAN{channel}"
 		
-		
-		
 		# Query result
 		if stat_mode == 0:
 			return self.query(f":MEASURE:ITEM? {item_str},{src_str}")
@@ -110,7 +108,7 @@ class RigolDS1000Z(Oscilloscope2Ctg):
 				return
 			stat_str = self.stat_table[stat_mode]
 			
-			return self.query(f":MEASURE:STAT:ITEM? {stat_str},{item_str},{src_str}")
+			return float(self.query(f":MEASURE:STAT:ITEM? {stat_str},{item_str},{src_str}"))
 	
 	def clear_measurements(self):
 		
