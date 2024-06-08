@@ -27,3 +27,4 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = 'renku'
 html_static_path = ['_static']
 extensions = ['myst_parser', 'sphinx.ext.autodoc']
+source_suffix = ['.rst', '.md']
