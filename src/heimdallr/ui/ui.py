@@ -1,4 +1,4 @@
-from base import *
+from heimdallr.base import *
 
 class CtgWidget:
 	
