@@ -99,7 +99,7 @@ class RigolDS1000Z(Oscilloscope2Ctg):
 		
 		# Query result
 		if stat_mode == 0:
-			return self.query(f":MEASURE:ITEM? {item_str},{src_str}")
+			return float(self.query(f":MEASURE:ITEM? {item_str},{src_str}"))
 		else:
 			
 			# Get stat string
