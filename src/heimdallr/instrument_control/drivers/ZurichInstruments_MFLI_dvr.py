@@ -74,7 +74,7 @@ class ZurichInstrumentsMFLI(LockInAmplifierCtg):
 	
 	def set_output_enable(self, enable:bool):
 		''' Enables the output '''
-		self.inst.setInt(f'/{self.dev_sn}/sigouts/0/enable', bool_to_int(enable))
+		self.inst.setInt(f'/{self.dev_sn}/sigouts/0/on', bool_to_int(enable))
 	
 	def set_50ohm(self, enable:bool):
 		''' Sets 50ohm mode for the output port '''
