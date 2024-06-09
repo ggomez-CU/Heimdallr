@@ -1,32 +1,44 @@
 from heimdallr.base import *
 
-class OscilloscopeCtg(Driver):
+class OscilloscopeCtg0(Driver):
+	
+	def __init__(self, address:str, log:LogPile, expected_idn=""):
+		super().__init__(address, log, expected_idn=expected_idn)
+
+class OscilloscopeCtg1(OscilloscopeCtg0):
 	
 	def __init__(self, address:str, log:LogPile, expected_idn=""):
 		super().__init__(address, log, expected_idn=expected_idn)
 	
+	@abstractmethod
 	def set_div_time(self, time_s:float):
 		pass
 	
+	@abstractmethod
 	def get_div_time(self, channel:int):
 		pass
 	
+	@abstractmethod
 	def set_offset_time(self, channel:int, time_s:float):
 		pass
 	
+	@abstractmethod
 	def set_div_volt(self, channel:int, volt_V:float):
 		pass
 	
+	@abstractmethod
 	def set_offset_volt(self, channel:int, volt_V:float):
 		pass
 	
+	@abstractmethod
 	def set_chan_enable(self, channel:int, enable:bool):
 		pass
 	
+	@abstractmethod
 	def get_waveform(self, channel:int):
 		pass
 
-class Oscilloscope2Ctg(OscilloscopeCtg):
+class OscilloscopeCtg2(OscilloscopeCtg1):
 	
 	# Measurement options
 	MEAS_VMAX = 0
@@ -46,8 +58,10 @@ class Oscilloscope2Ctg(OscilloscopeCtg):
 	def __init__(self, address:str, log:LogPile, expected_idn=""):
 		super().__init__(address, log, expected_idn=expected_idn)
 	
+	@abstractmethod
 	def add_measurement(self):
 		pass
 	
+	@abstractmethod
 	def get_measurement(self):
 		pass

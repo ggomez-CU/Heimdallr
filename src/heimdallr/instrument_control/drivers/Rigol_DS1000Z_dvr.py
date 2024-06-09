@@ -5,14 +5,14 @@ https://beyondmeasure.rigoltech.com/acton/attachment/1579/f-0386/1/-/-/-/-/DS100
 
 from heimdallr.instrument_control.categories.all_ctgs import *
 
-class RigolDS1000Z(Oscilloscope2Ctg):
+class RigolDS1000Z(OscilloscopeCtg2):
 
 	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log, expected_idn='RIGOL TECHNOLOGIES,DS10')
 		
-		self.meas_table = {Oscilloscope2Ctg.MEAS_VMAX:'VMAX', Oscilloscope2Ctg.MEAS_VMIN:'VMIN', Oscilloscope2Ctg.MEAS_VAVG:'VAVG', Oscilloscope2Ctg.MEAS_VPP:'VPP', Oscilloscope2Ctg.MEAS_FREQ:'FREQ'}
+		self.meas_table = {OscilloscopeCtg2.MEAS_VMAX:'VMAX', OscilloscopeCtg2.MEAS_VMIN:'VMIN', OscilloscopeCtg2.MEAS_VAVG:'VAVG', OscilloscopeCtg2.MEAS_VPP:'VPP', OscilloscopeCtg2.MEAS_FREQ:'FREQ'}
 		
-		self.stat_table = {Oscilloscope2Ctg.STAT_AVG:'AVER', Oscilloscope2Ctg.STAT_MAX:'MAX', Oscilloscope2Ctg.STAT_MIN:'MIN', Oscilloscope2Ctg.STAT_CURR:'CURR', Oscilloscope2Ctg.STAT_STD:'DEV'}
+		self.stat_table = {OscilloscopeCtg2.STAT_AVG:'AVER', OscilloscopeCtg2.STAT_MAX:'MAX', OscilloscopeCtg2.STAT_MIN:'MIN', OscilloscopeCtg2.STAT_CURR:'CURR', OscilloscopeCtg2.STAT_STD:'DEV'}
 		
 	def set_div_time(self, time_s:float):
 		self.write(f":TIM:MAIN:SCAL {time_s}")
@@ -117,7 +117,7 @@ class RigolDS1000Z(Oscilloscope2Ctg):
 	def set_measurement_stat_display(self, enable:bool):
 		'''
 		Turns display statistical values on/off for the Rigol DS1000Z series scopes. Not
-		part of the OscilloscopeCtg, but local to this driver.
+		part of the OscilloscopeCtg1, but local to this driver.
 		
 		Args:
 			enable (bool): Turns displayed stats on/off

@@ -3,6 +3,7 @@ from pylogfile import *
 import numpy as np
 import time
 import inspect
+from abc import ABC, abstractmethod
 
 class Identifier:
 	
@@ -56,7 +57,7 @@ class SpectrumAnalyzerRemote(RemoteInstrument):
 	def set_freq_end(self, f_Hz:float, channel:int=1):
 		pass
 
-class Driver:
+class Driver(ABC):
 	
 	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True):
 		
