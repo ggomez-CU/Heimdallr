@@ -13,15 +13,47 @@ class Identifier:
 		self.dvr = "" # Driver class
 		self.name = "" # Rich name provided by user (optional)
 
+class DriverManager:
+	''' Accepts a number of driver instances and allows them to be interacted with
+	over a network.
+	'''
+	
+	def __init__(self):
+		self.drivers = []
+	
+	def route_command(self, remote_id:str, command:str):
+		''' Accepts a command and remote-id and '''
+		pass
+		
+		#TODO: Find if remote_id is in driver list, and route command
+		
+	
+	
+
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This
 	class allows remote clients to control the instrument, despite not having a 
 	connection or driver locally.
 	'''
 	
-	def __init__(self):
-		self.net_id = "RohdeSchwarz-FSQ"
+	def __init__(self, ca:ClientAgent, remote_id:str=None, remote_address:str=None):
+		
+		# Save values
+		self.remote_id = remote_id
+		self.remote_address = remote_address
 		self.client_agent = None
+		
+		# Register with server - this will populate
+		self.register_instrument(remote_id=self.remote_id, remote_address=self.remote_address)
+	
+	def register_instrument(remote_id:str=None, remote_address:str=None):
+		pass
+	
+		#TODO:  Ask server for instrument info
+		
+		#TODO: Update id and address
+		# self.remote_id = 
+		# self.remote_address = 
 	
 	def remote_call(self, func_name:str, *args, **kwargs):
 		''' Calls the function 'func_name' of a remote instrument '''
@@ -43,6 +75,7 @@ def RemoteFunction(func):
 		func(self, *args, **kwargs)
 	return wrapper
 
+#TODO: Move this to the Ctg file. This style of class is recommended but not required. Can use REmoteInstrument for everything if you prefer.
 class SpectrumAnalyzerRemote(RemoteInstrument):
 	
 	def __init__(self):
