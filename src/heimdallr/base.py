@@ -4,6 +4,67 @@ import numpy as np
 import time
 import inspect
 from abc import ABC, abstractmethod
+from socket import getaddrinfo, gethostname
+import ipaddress
+import fnmatch
+
+def get_ip(ip_addr_proto="ipv4", ignore_local_ips=True):
+	# By default, this method only returns non-local IPv4 addresses
+	# To return IPv6 only, call get_ip('ipv6')
+	# To return both IPv4 and IPv6, call get_ip('both')
+	# To return local IPs, call get_ip(None, False)
+	# Can combine options like so get_ip('both', False)
+	#
+	# Thanks 'Geruta' from Stack Overflow: https://stackoverflow.com/questions/24196932/how-can-i-get-the-ip-address-from-a-nic-network-interface-controller-in-python
+
+	af_inet = 2
+	if ip_addr_proto == "ipv6":
+		af_inet = 30
+	elif ip_addr_proto == "both":
+		af_inet = 0
+
+	system_ip_list = getaddrinfo(gethostname(), None, af_inet, 1, 0)
+	ip_list = []
+
+	for ip in system_ip_list:
+		ip = ip[4][0]
+
+		try:
+			ipaddress.ip_address(str(ip))
+			ip_address_valid = True
+		except ValueError:
+			ip_address_valid = False
+		else:
+			if ipaddress.ip_address(ip).is_loopback and ignore_local_ips or ipaddress.ip_address(ip).is_link_local and ignore_local_ips:
+				pass
+			elif ip_address_valid:
+				ip_list.append(ip)
+
+	return ip_list
+
+def wildcard(test:str, pattern:str):
+	return len(fnmatch.filter([test], pattern)) > 0
+
+class HostID:
+	''' Contains the IP address and host-name for the host. Primarily used
+	so drivers can quickly identify the host's IP address.'''
+	
+	def __init__(self, target_ip:str="192.168.1.*"):
+		''' Identifies the ipv4 address and host-name of the host.'''
+		self.ip_address = ""
+		self.host_name = ""
+		
+		# Get list of IP address for each network adapter
+		ip_list = get_ip()
+		
+		# Scan over list and check each
+		for ipl in ip_list:
+			
+			# Check for match
+			if wildcard(ipl, target_ip):
+				self.ip_address = ipl
+		
+		self.host_name = gethostname()
 
 class Identifier:
 	
@@ -11,8 +72,19 @@ class Identifier:
 		self.idn_model = "" # Identifier provided by instrument itself (*IDN?)
 		self.ctg = "" # Category class of driver
 		self.dvr = "" # Driver class
-		self.name = "" # Rich name provided by user (optional)
-
+		
+		self.remote_id = "" # Rich name authenticated by the server and used to lookup the remote address
+		self.remote_addr = ("", "") # Tuple of IP address of driver host, then instrument VISA address.
+		
+	def __str__(self):
+		
+		# Get remote address length
+		ra_str = self.remote_addr[0] + "|" + self.remote_addr[1]
+		if len(ra_str) < 3:
+			ra_str = "?"
+		
+		return f"idn_model: {self.idn_model}\ncategory: {self.ctg}\ndriver-class: {self.dvr}\nremote-id: {self.remote_id}\nremote-addr: {ra_str}"
+	
 class DriverManager:
 	''' Accepts a number of driver instances and allows them to be interacted with
 	over a network.
@@ -28,7 +100,10 @@ class DriverManager:
 		#TODO: Find if remote_id is in driver list, and route command
 		
 	
+class ClientAgent:
 	
+	def __init__(self):
+		pass
 
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This
@@ -92,19 +167,36 @@ class SpectrumAnalyzerRemote(RemoteInstrument):
 
 class Driver(ABC):
 	
-	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True):
+	#TODO: Modify all category and drivers to pass kwargs to super
+	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True, remote_id:str=None, host_id:HostID=None):
 		
 		self.address = address
 		self.log = log
 		self.is_scpi = is_scpi
 		
 		self.id = Identifier()
-		self.expected_idn = expected_idn 
+		self.expected_idn = expected_idn
 		self.verified_hardware = False
 		
 		self.online = False
 		self.rm = pv.ResourceManager()
 		self.isnt = None
+		
+		# Populate id
+		if host_id is not None:
+			self.id.remote_addr = (host_id.ip_address, self.address)
+		if remote_id is not None:
+			self.id.remote_id = remote_id
+			
+		# Get category
+		inheritance_list = inspect.getmro(self.__class__)
+		dvr_o = inheritance_list[0]
+		ctg_o = inheritance_list[1]
+		self.id.ctg = f"{ctg_o}"
+		self.id.dvr = f"{dvr_o}"
+		
+		#TODO: Automatically reconnect
+		# Connect instrument
 		self.connect()
 	
 	def connect(self, check_id:bool=True):
@@ -144,7 +236,7 @@ class Driver(ABC):
 			return
 		
 		# Query IDN model
-		self.id.idn_model = self.query("*IDN?")
+		self.id.idn_model = self.query("*IDN?").strip()
 		
 		if self.id.idn_model is not None:
 			self.online = True

@@ -2,13 +2,13 @@ from heimdallr.base import *
 
 class OscilloscopeCtg0(Driver):
 	
-	def __init__(self, address:str, log:LogPile, expected_idn=""):
-		super().__init__(address, log, expected_idn=expected_idn)
+	def __init__(self, address:str, log:LogPile, expected_idn="", **kwargs):
+		super().__init__(address, log, expected_idn=expected_idn, **kwargs)
 
 class OscilloscopeCtg1(OscilloscopeCtg0):
 	
-	def __init__(self, address:str, log:LogPile, expected_idn=""):
-		super().__init__(address, log, expected_idn=expected_idn)
+	def __init__(self, address:str, log:LogPile, expected_idn="", **kwargs):
+		super().__init__(address, log, expected_idn=expected_idn, **kwargs)
 	
 	@abstractmethod
 	def set_div_time(self, time_s:float):
@@ -55,8 +55,8 @@ class OscilloscopeCtg2(OscilloscopeCtg1):
 	STAT_CURR = 4
 	STAT_STD = 5
 	
-	def __init__(self, address:str, log:LogPile, expected_idn=""):
-		super().__init__(address, log, expected_idn=expected_idn)
+	def __init__(self, address:str, log:LogPile, expected_idn="", **kwargs):
+		super().__init__(address, log, expected_idn=expected_idn, **kwargs)
 	
 	@abstractmethod
 	def add_measurement(self):
