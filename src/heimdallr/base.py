@@ -67,6 +67,9 @@ class HostID:
 		self.host_name = gethostname()
 
 class Identifier:
+	''' Data to identify a specific instrument driver instance. Contains
+	its location on a network (if applicable), rich-name, class type, and
+	identification string provided by the instrument.'''
 	
 	def __init__(self):
 		self.idn_model = "" # Identifier provided by instrument itself (*IDN?)
@@ -84,22 +87,7 @@ class Identifier:
 			ra_str = "?"
 		
 		return f"idn_model: {self.idn_model}\ncategory: {self.ctg}\ndriver-class: {self.dvr}\nremote-id: {self.remote_id}\nremote-addr: {ra_str}"
-	
-class DriverManager:
-	''' Accepts a number of driver instances and allows them to be interacted with
-	over a network.
-	'''
-	
-	def __init__(self):
-		self.drivers = []
-	
-	def route_command(self, remote_id:str, command:str):
-		''' Accepts a command and remote-id and '''
-		pass
-		
-		#TODO: Find if remote_id is in driver list, and route command
-		
-	
+
 class ClientAgent:
 	
 	def __init__(self):
@@ -361,6 +349,26 @@ class Driver(ABC):
 			self.log.error(f"Failed to query instrument {self.address}. ({e})")
 			self.online = False
 			return None
+
+class DriverManager:
+	''' Accepts a number of driver instances and allows them to be interacted with
+	over a network.
+	'''
+	
+	#TODO: Implement multi-threading
+	
+	def __init__(self):
+		self.drivers = []
+	
+	def route_command(self, remote_id:str, command:str):
+		''' Accepts a command and remote-id and '''
+		pass
+		
+		#TODO: Find if remote_id is in driver list, and route command
+	
+	def add_instrument(self, dvr:Driver):
+		
+		pass
 
 def bool_to_str01(val:bool):
 	''' Converts a boolean value to 0/1 as a string '''

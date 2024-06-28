@@ -8,6 +8,7 @@ from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from pylogfile import *
+from heimdallr.networking.network import *
 
 ACCOUNT_ADMIN = 30
 ACCOUNT_STANDARD = 20
