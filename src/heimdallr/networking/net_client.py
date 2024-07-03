@@ -10,10 +10,6 @@ from Crypto.Util.Padding import pad, unpad
 from pylogfile import *
 from heimdallr.networking.network import *
 
-ACCOUNT_ADMIN = 30
-ACCOUNT_STANDARD = 20
-ACCOUNT_LOW = 10
-
 # Initialize database access
 db_mutex = threading.Lock() # Create a mutex for the database
 
