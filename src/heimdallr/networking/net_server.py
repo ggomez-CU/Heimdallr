@@ -39,26 +39,44 @@ class ServerMaster:
 		
 		return True
 
-instrument_lookup = ThreadSafeData()
-instrument_lookup.add_list("instruments") # List of Identifier() objects
-instrument_lookup.list_append("instruments", inst)
-instrument_lookup.list_read("instruments", idx=0)
-instrument_lookup.list_read_attr("instruments", idx=0, attr="remote_id")
-instrument_lookup.list_set("instruments", idx=0, val=inst)
-instrument_lookup.list_set_attr("instruments", idx=0, attr="remote_id", val="Oscilloscope-Rigol-Main")
+serv_master = ServerMaster()
 
-class HeimdallrServerAgent:
+# class HeimdallrServerAgent:
 	
-	def __init__(self, **kwargs):
-		super().__init__(**kwargs)
+# 	def __init__(self, **kwargs):
+# 		super().__init__(**kwargs)
 		
-		# Look up instrument
-		self.instrument_lookup = []
+# 		# Look up instrument
+# 		self.instrument_lookup = []
 
 def server_callback_send(sa:ServerAgent, gc:GenCommand):
-	'''  '''
+	''' Function passed to ServerAgents to execute custom send-commands for Heimdallr
+	 networks (ie. those without a return value). '''
+	global serv_master
+	
 	pass
 
 def server_callback_query(sa:ServerAgent, gc:GenCommand):
-	'''  '''
+	''' Function passed to ServerAgents to execute custom query-commands for Heimdallr
+	 networks (ie. those with a return value). '''
+	global serv_master
+	
+	gd_err = GenData({"STATUS": False})
+	
+	if gc.command == "REG-INST":
+		
+		# Check fields present
+		if not gc.validate_reply(["REMOTE-ID", "REMOTE-ADDR"]):
+			gd_err.metadata['error_str'] = "Failed to validate command."
+			return gd_err
+		
+		#TODO: Find remote-id or remote-addr, whichever are populated.
+		serv_master
+		
+		#TODO: Populate DenData response
+		
+		# Return response to client
+		gdata = GenData({"NUMUSER":num_unique, "STATUS": True})
+		return gdata
+	
 	pass
