@@ -1,5 +1,5 @@
 
-from pyfrost.pyfrost import *
+from pyfrost.base import *
 from pyfrost.pf_client import *
 
 # def client_handler(ca:ClientAgent, opt:ClientOptions, words:list) -> bool:

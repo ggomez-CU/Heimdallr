@@ -1,6 +1,6 @@
 from colorama import Fore, Style, Back
 
-from pyfrost.pyfrost import *
+from pyfrost.base import *
 from pyfrost.pf_server import *
 
 from heimdallr.networking.network import *
