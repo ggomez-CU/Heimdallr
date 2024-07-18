@@ -7,7 +7,7 @@ import sqlite3
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-from pylogfile import *
+from pylogfile.base import *
 from heimdallr.networking.network import *
 
 # Initialize database access

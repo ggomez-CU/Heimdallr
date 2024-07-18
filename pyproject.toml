@@ -19,7 +19,7 @@ classifiers = [
 dependencies = [
 	'numpy >= 1.0.0',
 	'pyvisa >= 1.0.0',
-	'pylogfile >= 0.1.0',
+	'pylogfile >= 0.3.0',
 	'h5py >= 3.0.0',
 	'colorama >= 0.4.0'
 ]
