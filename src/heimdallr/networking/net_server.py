@@ -70,13 +70,24 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 			gd_err.metadata['error_str'] = "Failed to validate command."
 			return gd_err
 		
-		#TODO: Find remote-id or remote-addr, whichever are populated.
-		serv_master
+		# Find remote-id or remote-addr, whichever are populated.
+		if len(gd_err.data['REMOTE-ID']) > 0:
+			fidx = serv_master.find_attr("instruments", "remote_id", gd_err.data['REMOTE-ID'])
+			
+		else:
+			fidx = serv_master.find_attr("instruments", "remote_address", gd_err.data['REMOTE-ADDR'])
 		
-		#TODO: Populate DenData response
+		# Make sure an entry was found
+		if len(fidx < 1):
+			gd_err.metadata("Failed to find specified instrument registered on server.")
+			return gd_err
 		
-		# Return response to client
-		gdata = GenData({"NUMUSER":num_unique, "STATUS": True})
+		# Access database
+		rid = serv_master.read_attr("instruments", fidx, "remote_id")
+		radr = serv_master.read_attr("instruments", fidx, "remote_addr")
+		
+		# Populate GenData response
+		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr})
 		return gdata
 	
 	pass
