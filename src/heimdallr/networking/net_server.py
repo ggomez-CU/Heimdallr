@@ -21,7 +21,7 @@ class ServerMaster:
 		
 		# Initailize ThreadSafeData object to track instruments
 		self.network_instruments = ThreadSafeData()
-		self.network_instruments.add_list("instruments")
+		self.network_instruments.add_param("instruments")
 	
 	def add_instrument(self, inst_id:Identifier) -> bool:
 		''' Adds an instrument to the network. Returns boolean for success status.'''

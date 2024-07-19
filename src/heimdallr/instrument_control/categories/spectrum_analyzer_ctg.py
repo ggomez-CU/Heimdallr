@@ -1,4 +1,5 @@
 from heimdallr.base import *
+from heimdallr.networking.network import *
 
 class SpectrumAnalyzerCtg(Driver):
 	
