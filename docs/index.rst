@@ -10,7 +10,7 @@ This is where text should go explaining what the repo does.
 
 This is how you can link to the `GitHub`_ or `PyPI`_.
 
-You can add bullets like this:
+You can add bullets like this: :doc:`What and Why <pages/what_and_why_heimdallr.md>`
 
 * Bullet 1
 * Bullet 2 
@@ -24,6 +24,7 @@ This is going to be the table of contents.
    overview.md
    installation
    modules
+   
 
 
 
@@ -36,3 +37,4 @@ Indices and tables
 
 .. _GitHub: https://github.com/Grant-Giesbrecht/Heimdallr
 .. _PyPI: https://pypi.org/project/heimdallr-py/
+.. _what_and_why: https://pypi.org/project/heimdallr-py/
