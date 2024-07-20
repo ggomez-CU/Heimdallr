@@ -49,7 +49,7 @@ class HostID:
 	''' Contains the IP address and host-name for the host. Primarily used
 	so drivers can quickly identify the host's IP address.'''
 	
-	def __init__(self, target_ip:str="192.168.1.*"):
+	def __init__(self, target_ips:str=["192.168.1.*", "192.168.*.*"]):
 		''' Identifies the ipv4 address and host-name of the host.'''
 		self.ip_address = ""
 		self.host_name = ""
@@ -58,11 +58,12 @@ class HostID:
 		ip_list = get_ip()
 		
 		# Scan over list and check each
-		for ipl in ip_list:
-			
-			# Check for match
-			if wildcard(ipl, target_ip):
-				self.ip_address = ipl
+		for target_ip in target_ips:
+			for ipl in ip_list:
+				
+				# Check for match
+				if wildcard(ipl, target_ip):
+					self.ip_address = ipl
 		
 		self.host_name = gethostname()
 
@@ -77,23 +78,11 @@ class Identifier:
 		self.dvr = "" # Driver class
 		
 		self.remote_id = "" # Rich name authenticated by the server and used to lookup the remote address
-		self.remote_addr = ("", "") # Tuple of IP address of driver host, then instrument VISA address.
+		self.remote_addr = "" # String IP address of driver host, pipe, then instrument VISA address.
 		
 	def __str__(self):
 		
-		# Get remote address length
-		ra_str = self.remote_addr[0] + "|" + self.remote_addr[1]
-		if len(ra_str) < 3:
-			ra_str = "?"
-		
-		return f"idn_model: {self.idn_model}\ncategory: {self.ctg}\ndriver-class: {self.dvr}\nremote-id: {self.remote_id}\nremote-addr: {ra_str}"
-
-class ClientAgent:
-	
-	def __init__(self):
-		pass
-
-
+		return f"idn_model: {self.idn_model}\ncategory: {self.ctg}\ndriver-class: {self.dvr}\nremote-id: {self.remote_id}\nremote-addr: {self.remote_addr}"
 
 class Driver(ABC):
 	
@@ -103,6 +92,7 @@ class Driver(ABC):
 		self.address = address
 		self.log = log
 		self.is_scpi = is_scpi
+		self.hid = host_id
 		
 		self.id = Identifier()
 		self.expected_idn = expected_idn
@@ -113,8 +103,11 @@ class Driver(ABC):
 		self.isnt = None
 		
 		# Populate id
-		if host_id is not None:
-			self.id.remote_addr = (host_id.ip_address, self.address)
+		if host_id is None:
+			self.hid = HostID()
+			
+		# Setup ID
+		self.id.remote_addr = self.hid.ip_address + "|" + self.address
 		if remote_id is not None:
 			self.id.remote_id = remote_id
 			

@@ -25,17 +25,10 @@ if __name__ == '__main__':
 	copt = ClientOptions()
 	
 	# Create remote instruments from address
-	rem_osc1 = RemoteInstrument(ca, remote_inst_address="192.168.0.14/TCPIP0::192.168.2.11::INSTR")
+	rem_osc1 = RemoteInstrument(ca, remote_inst_address="192.168.0.14|TCPIP0::192.168.2.11::INSTR")
 	
 	# TODO: Change current register_instrument to something like find instrument
 	# TODO: Make register_instrument accept an Instrument object
-	ca.register_instrument(rem_osc1)
+	rem_osc1.locate_instrument(rem_osc1)
 	
-	# # Create remote instruments from address
-	# scope1 = RemoteInstrument(ca, remote_inst_address="192.168.0.14/GPIB::14")
-	# scope2 = RemoteInstrument(ca, remote_inst_address="192.168.0.14/192.168.0.200")
-
-	# # Create remote instruments from name
-	# scope3 = RemoteInstrument(ca, remote_inst_name="Ibias_Oscilloscope")
-
-	scope3.set_chan_enable(2, False)
+	#TODO: Do things with rem_osc1 like set the voltage or whatever

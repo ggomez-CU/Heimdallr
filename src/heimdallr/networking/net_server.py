@@ -4,7 +4,7 @@ from pyfrost.base import *
 from pyfrost.pf_server import *
 
 from heimdallr.networking.network import *
-from heimdallr.all import *
+from heimdallr.base import *
 
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
@@ -35,7 +35,7 @@ class ServerMaster:
 			return False
 		
 		# Add to list
-		self.network_instruments.list_append("instruments", inst_id)
+		self.network_instruments.append("instruments", inst_id)
 		
 		return True
 
@@ -54,7 +54,26 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 	 networks (ie. those without a return value). '''
 	global serv_master
 	
-	pass
+	if gc.command == "REG-INST": # Register instrument
+		
+		# Check fields present
+		if not gc.validate_reply(["REMOTE-ID", "REMOTE-ADDR", "CTG", "IDN-MODEL", "DVR"], log):
+			return False
+		
+		nid = Identifier()
+		nid.remote_addr = gc.data['REMOTE-ADDR']
+		nid.remote_id = gc.data['REMOTE-ID']
+		nid.ctg = gc.data['CTG']
+		nid.dvr = gc.data['DVR']
+		nid.idn_model = gc.data['IDN-MODEL']
+		
+		# Add instrument to database
+		serv_master.add_instrument(nid)
+		
+		return True
+	
+	# Return None if command is not recognized
+	return None
 
 def server_callback_query(sa:ServerAgent, gc:GenCommand):
 	''' Function passed to ServerAgents to execute custom query-commands for Heimdallr
@@ -63,7 +82,7 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 	
 	gd_err = GenData({"STATUS": False})
 	
-	if gc.command == "REG-INST":
+	if gc.command == "LOC-INST": # Locate instrument
 		
 		# Check fields present
 		if not gc.validate_reply(["REMOTE-ID", "REMOTE-ADDR"]):
@@ -71,11 +90,11 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 			return gd_err
 		
 		# Find remote-id or remote-addr, whichever are populated.
-		if len(gd_err.data['REMOTE-ID']) > 0:
-			fidx = serv_master.find_attr("instruments", "remote_id", gd_err.data['REMOTE-ID'])
+		if len(gc.data['REMOTE-ID']) > 0:
+			fidx = serv_master.find_attr("instruments", "remote_id", gc.data['REMOTE-ID'])
 			
 		else:
-			fidx = serv_master.find_attr("instruments", "remote_address", gd_err.data['REMOTE-ADDR'])
+			fidx = serv_master.find_attr("instruments", "remote_address", gc.data['REMOTE-ADDR'])
 		
 		# Make sure an entry was found
 		if len(fidx < 1):
@@ -90,4 +109,5 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr})
 		return gdata
 	
-	pass
+	# Return None if command is not recognized
+	return None

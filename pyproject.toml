@@ -22,7 +22,8 @@ dependencies = [
 	'pylogfile >= 0.3.0',
 	'h5py >= 3.0.0',
 	'colorama >= 0.4.0',
-	'zhinst >= 24.4.2'
+	'zhinst >= 24.4.2',
+	'pyfrost-network >= 0.0.0.dev0'
 ]
 
 [project.urls]
