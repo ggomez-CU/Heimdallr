@@ -34,3 +34,6 @@ if __name__ == '__main__':
 	ca.register_instrument(scope1.id)
 	
 	#TODO: Make a main loop where this just does other clients' biddings
+	while True:
+		
+		time.sleep(1)
