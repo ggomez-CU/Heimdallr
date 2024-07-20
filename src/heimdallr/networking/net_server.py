@@ -57,7 +57,7 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 	if gc.command == "REG-INST": # Register instrument
 		
 		# Check fields present
-		if not gc.validate_reply(["REMOTE-ID", "REMOTE-ADDR", "CTG", "IDN-MODEL", "DVR"], log):
+		if not gc.validate_command(["REMOTE-ID", "REMOTE-ADDR", "CTG", "IDN-MODEL", "DVR"], log):
 			return False
 		
 		nid = Identifier()
@@ -85,28 +85,30 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 	if gc.command == "LOC-INST": # Locate instrument
 		
 		# Check fields present
-		if not gc.validate_reply(["REMOTE-ID", "REMOTE-ADDR"]):
+		if not gc.validate_command(["REMOTE-ID", "REMOTE-ADDR"], log):
 			gd_err.metadata['error_str'] = "Failed to validate command."
 			return gd_err
 		
 		# Find remote-id or remote-addr, whichever are populated.
-		if len(gc.data['REMOTE-ID']) > 0:
-			fidx = serv_master.find_attr("instruments", "remote_id", gc.data['REMOTE-ID'])
-			
+		if (gc.data['REMOTE-ID'] is not None) and (len(gc.data['REMOTE-ID']) > 0):
+			fidx = serv_master.network_instruments.find_attr("instruments", "remote_id", gc.data['REMOTE-ID'])
 		else:
-			fidx = serv_master.find_attr("instruments", "remote_address", gc.data['REMOTE-ADDR'])
+			fidx = serv_master.network_instruments.find_attr("instruments", "remote_address", gc.data['REMOTE-ADDR'])
 		
 		# Make sure an entry was found
-		if len(fidx < 1):
-			gd_err.metadata("Failed to find specified instrument registered on server.")
+		if len(fidx) < 1:
+			gd_err.metadata['error_str'] = "Failed to find specified instrument registered on server."
 			return gd_err
 		
 		# Access database
-		rid = serv_master.read_attr("instruments", fidx, "remote_id")
-		radr = serv_master.read_attr("instruments", fidx, "remote_addr")
+		rid = serv_master.network_instruments.read_attr("instruments", fidx, "remote_id")
+		radr = serv_master.network_instruments.read_attr("instruments", fidx, "remote_addr")
+		rdvr = serv_master.network_instruments.read_attr("instruments", fidx, "dvr")
+		rctg = serv_master.network_instruments.read_attr("instruments", fidx, "ctg")
+		ridn = serv_master.network_instruments.read_attr("instruments", fidx, "idn_model")
 		
 		# Populate GenData response
-		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr})
+		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})
 		return gdata
 	
 	# Return None if command is not recognized
