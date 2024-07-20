@@ -64,8 +64,13 @@ class HostID:
 				# Check for match
 				if wildcard(ipl, target_ip):
 					self.ip_address = ipl
+					break
 		
 		self.host_name = gethostname()
+	
+	def __str__(self):
+		
+		return f"ip-address: {self.ip_address}\nhost-name: {self.host_name}"
 
 class Identifier:
 	''' Data to identify a specific instrument driver instance. Contains

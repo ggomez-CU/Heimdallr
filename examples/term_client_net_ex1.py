@@ -40,7 +40,7 @@ if __name__ == '__main__':
 	if rem_osc1.connected:
 		log.info(f"Successfully connected rem_osc1 to remote instrument!")
 		print(f"IDN provided by network server:")
-		print(f"\t{rem_osc1.id}")
+		print(f"{Fore.YELLOW}{rem_osc1.id}{Style.RESET_ALL}")
 	else:
 		log.error(f"Failed to connect rem_osc1 to remote instrument!")
 	
