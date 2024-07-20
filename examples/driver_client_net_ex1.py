@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	log = LogPile()
 	
 	# Create client agent
-	ca = DriverClientAgent(log)
+	ca = HeimdallrClientAgent(log)
 	ca.set_addr(ip_address, 5555)
 	ca.connect_socket()
 	

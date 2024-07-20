@@ -20,22 +20,25 @@ class ServerMaster:
 	def __init__(self):
 		
 		# Initailize ThreadSafeData object to track instruments
-		self.network_instruments = ThreadSafeData()
-		self.network_instruments.add_param("instruments")
+		self.master_data = ThreadSafeData()
+		self.master_data.add_param("instruments")
 	
 	def add_instrument(self, inst_id:Identifier) -> bool:
 		''' Adds an instrument to the network. Returns boolean for success status.'''
 		
-		# Check if remote_id or remote_addr are already used in network_instruments
-		if len(self.network_instruments.find_attr("instruments", "remote_id", inst_id.remote_id)) > 0:
-			self.log.debug(f"Failed to add instrument because remote_id was already claimed on server.")
-			return False
-		if len(self.network_instruments.find_attr("instruments", "remote_addr", inst_id.remote_addr)) > 0:
-			self.log.debug(f"Failed to add instrument because remote_addr was already claimed on server.")
-			return False
+		# Acquire mutex
+		with self.master_data.mtx:
 		
-		# Add to list
-		self.network_instruments.append("instruments", inst_id)
+			# Check if remote_id or remote_addr are already used in master_data
+			if len(self.master_data.find_attr("instruments", "remote_id", inst_id.remote_id)) > 0:
+				self.log.debug(f"Failed to add instrument because remote_id was already claimed on server.")
+				return False
+			if len(self.master_data.find_attr("instruments", "remote_addr", inst_id.remote_addr)) > 0:
+				self.log.debug(f"Failed to add instrument because remote_addr was already claimed on server.")
+				return False
+		
+			# Add to list
+			self.master_data.append("instruments", inst_id)
 		
 		return True
 
@@ -89,23 +92,60 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 			gd_err.metadata['error_str'] = "Failed to validate command."
 			return gd_err
 		
-		# Find remote-id or remote-addr, whichever are populated.
-		if (gc.data['REMOTE-ID'] is not None) and (len(gc.data['REMOTE-ID']) > 0):
-			fidx = serv_master.network_instruments.find_attr("instruments", "remote_id", gc.data['REMOTE-ID'])
-		else:
-			fidx = serv_master.network_instruments.find_attr("instruments", "remote_address", gc.data['REMOTE-ADDR'])
+		# Acquire mutex
+		with serv_master.master_data.mtx:
 		
-		# Make sure an entry was found
-		if len(fidx) < 1:
-			gd_err.metadata['error_str'] = "Failed to find specified instrument registered on server."
-			return gd_err
+			# Find remote-id or remote-addr, whichever are populated.
+			if (gc.data['REMOTE-ID'] is not None) and (len(gc.data['REMOTE-ID']) > 0):
+				fidx = serv_master.master_data.find_attr("instruments", "remote_id", gc.data['REMOTE-ID'])
+			else:
+				fidx = serv_master.master_data.find_attr("instruments", "remote_address", gc.data['REMOTE-ADDR'])
+			
+			# Make sure an entry was found
+			if len(fidx) < 1:
+				gd_err.metadata['error_str'] = "Failed to find specified instrument registered on server."
+				return gd_err
+			
+			# Convert from list to first hit (int)
+			fidx = fidx[0]
+			
+			# Access database
+			rid = serv_master.master_data.read_attr("instruments", fidx, "remote_id")
+			radr = serv_master.master_data.read_attr("instruments", fidx, "remote_addr")
+			rdvr = serv_master.master_data.read_attr("instruments", fidx, "dvr")
+			rctg = serv_master.master_data.read_attr("instruments", fidx, "ctg")
+			ridn = serv_master.master_data.read_attr("instruments", fidx, "idn_model")
 		
-		# Access database
-		rid = serv_master.network_instruments.read_attr("instruments", fidx, "remote_id")
-		radr = serv_master.network_instruments.read_attr("instruments", fidx, "remote_addr")
-		rdvr = serv_master.network_instruments.read_attr("instruments", fidx, "dvr")
-		rctg = serv_master.network_instruments.read_attr("instruments", fidx, "ctg")
-		ridn = serv_master.network_instruments.read_attr("instruments", fidx, "idn_model")
+		# Populate GenData response
+		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})
+		return gdata
+	
+	if gc.command == "LIST-INST": # Return a list of all network-registered instruments
+		
+		#NOTE: Validation not performed because no additional parameters are expected
+		
+		# Initialize arrays
+		rid = []
+		radr = []
+		rdvr = []
+		rctg = []
+		ridn = []
+		
+		# Hold master_data across multiple operations
+		with serv_master.master_data.mtx:
+		
+			# Get length to iterate over
+			param_len = serv_master.master_data.get_param_len("instruments")
+			
+			# Loop over length
+			for fidx in range(param_len):
+				
+				# Access database
+				rid.append(serv_master.master_data.read_attr("instruments", fidx, "remote_id"))
+				radr.append(serv_master.master_data.read_attr("instruments", fidx, "remote_addr"))
+				rdvr.append(serv_master.master_data.read_attr("instruments", fidx, "dvr"))
+				rctg.append(serv_master.master_data.read_attr("instruments", fidx, "ctg"))
+				ridn.append(serv_master.master_data.read_attr("instruments", fidx, "idn_model"))
 		
 		# Populate GenData response
 		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})

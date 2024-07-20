@@ -2,7 +2,7 @@ from pylogfile.base import *
 from heimdallr.networking.network import *
 from heimdallr.base import *
 
-class DriverClientAgent(ClientAgent):
+class HeimdallrClientAgent(ClientAgent):
 	
 	def __init__(self, log:LogPile, address:str=None, port:int=None, **kwargs):
 		super().__init__(log=log, address=address, port=port, **kwargs)
@@ -23,6 +23,67 @@ class DriverClientAgent(ClientAgent):
 			self.log.debug(f"Successfully registered instrument (remote_id={id.remote_id}, remote_address={id.remote_addr}).")
 			
 		return True
+	
+	def get_network_instrument_list(self, print_ids:bool=False):
+		''' Gets a list of registered instruments from the server. Returns None if an error occurs, otherwise
+		returns a list of the Identifiers'''
+		
+		# Prepare command
+		gc = GenCommand("LIST-INST", {})
+		
+		data_packet = self.query_command(gc)
+		
+		# Check for missing packet
+		if data_packet is None:
+			self.connected = False
+			return None
+		
+		# Check for error in packet
+		if not data_packet.validate_reply(['REMOTE-ID', 'REMOTE-ADDR', 'CTG', 'DVR', 'IDN-MODEL'], self.log):
+			self.connected = False
+			return None
+		
+		# Update data
+		l_remote_id = data_packet.data['REMOTE-ID']
+		l_remote_addr = data_packet.data['REMOTE-ADDR']
+		l_ctg = data_packet.data['CTG']
+		l_dvr = data_packet.data['DVR']
+		l_idn_model = data_packet.data['IDN-MODEL']
+		
+		# Check all have same length
+		it = iter([l_remote_id, l_remote_addr, l_ctg, l_dvr, l_idn_model])
+		num_inst = len(next(it))
+		if not all(len(l) == num_inst for l in it):
+			return None
+		
+		# Create list of Identifiers
+		id_list = []
+		for idx in range(num_inst):
+			
+			# Create new Identifier and populate
+			nid = Identifier()
+			nid.remote_id = l_remote_id[idx]
+			nid.remote_addr = l_remote_addr[idx]
+			nid.ctg = l_ctg[idx]
+			nid.dvr = l_dvr[idx]
+			nid.idn_model = l_idn_model[idx]
+			
+			# Add to list
+			id_list.append(nid)
+		
+		# Print identifiers if asked
+		table_data = []
+		table_data.append(["remote-id", "remote-addr", "ctg", "dvr", "idn-model"])
+		if print_ids:
+			for id in id_list: # Print each identifier
+				table_data.append([id.remote_id, id.remote_addr, id.ctg, id.dvr, id.idn_model])
+			T = tabulate.tabulate(table_data, headers='firstrow', tablefmt='fancy_grid')
+			print(str(T))
+		
+		self.connected = True
+		
+		return id_list
+		
 	
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This

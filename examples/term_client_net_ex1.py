@@ -17,7 +17,7 @@ if __name__ == '__main__':
 	log = LogPile()
 	
 	# Create client agent
-	ca = ClientAgent(log)
+	ca = HeimdallrClientAgent(log)
 	ca.set_addr(ip_address, 5555)
 	ca.connect_socket()
 	
@@ -27,6 +27,8 @@ if __name__ == '__main__':
 	# Create client options
 	copt = ClientOptions()
 	
+	ca.get_network_instrument_list(print_ids=True)
+	
 	# Create remote instruments from address
 	# rem_osc1 = RemoteInstrument(ca, log, remote_address="192.168.1.117|TCPIP0::192.168.1.20::INSTR")
 	rem_osc1 = RemoteInstrument(ca, log, remote_id="Scope1")
@@ -34,6 +36,13 @@ if __name__ == '__main__':
 	# TODO: Change current register_instrument to something like find instrument
 	# TODO: Make register_instrument accept an Instrument object
 	# rem_osc1.locate_instrument(rem_osc1)
+	
+	if rem_osc1.connected:
+		log.info(f"Successfully connected rem_osc1 to remote instrument!")
+		print(f"IDN provided by network server:")
+		print(f"\t{rem_osc1.id}")
+	else:
+		log.error(f"Failed to connect rem_osc1 to remote instrument!")
 	
 	#TODO: Do things with rem_osc1 like set the voltage or whatever
 	while True:
