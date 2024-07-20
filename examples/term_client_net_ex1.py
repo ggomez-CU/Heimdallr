@@ -47,4 +47,8 @@ if __name__ == '__main__':
 	#TODO: Do things with rem_osc1 like set the voltage or whatever
 	while True:
 		
-		time.sleep(1)
+		a = input("Press enter to set volts/div to 1.")
+		
+		rem_osc1.remote_call("set_div_volt", 1, 1)
+		
+		

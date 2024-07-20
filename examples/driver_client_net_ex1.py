@@ -36,7 +36,9 @@ if __name__ == '__main__':
 	# Begin main loop s.t. this client executes the instructions from the server (which receives them from other clients)
 	
 	while True:
-		time.sleep(1)
+		
+		# time.sleep(1)
+		ca.listen_command()
 	
 	# # Begin listening mode
 	# ca.begin_listener_mode()

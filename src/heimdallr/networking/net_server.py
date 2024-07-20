@@ -83,11 +83,20 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 		
 		return True
 	
-	elif gc.command == "LISTEN-MODE":
+	elif gc.command == "REMCALL":
 		
-		#NOTE: Skip check for fields bc none expected
+		# Check fields present
+		if not gc.validate_command(["REMOTE-ID", "REMOTE-ADDR", "FUNCTION", "ARGS", "KWARGS"], log):
+			return False
 		
-		sa.app_data[CLIENT_LISTEN_MODE] = True
+		# Create a NetworkCommand object
+		nc = NetworkCommand(gc=gc)
+		
+		# Add to master net command
+		with serv_master.master_net_cmd.mtx:
+			serv_master.master_net_cmd.append(nc)
+		
+		#TODO: Populate source_client
 		
 		return True
 	
@@ -136,7 +145,7 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})
 		return gdata
 	
-	if gc.command == "LIST-INST": # Return a list of all network-registered instruments
+	elif gc.command == "LIST-INST": # Return a list of all network-registered instruments
 		
 		#NOTE: Validation not performed because no additional parameters are expected
 		
@@ -167,5 +176,15 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})
 		return gdata
 	
+	elif gc.command == "DL-LISTEN": # Driver/Listener client is listening for new commands from server
+		
+		#NOTE: Validation not performed because no additional parameters are expected
+		
+		# Look for NetworkCommand objects assigned to this client
+		
+		# Prepare a GenData object with all NetworkCommand objects included
+		
+		return gdata
+		
 	# Return None if command is not recognized
 	return None

@@ -84,22 +84,6 @@ class HeimdallrClientAgent(ClientAgent):
 		
 		return id_list
 	
-	def begin_listener_mode(self):
-		''' Sends an instruction to the server that this client will listen for commands 
-		rather than initiate them for the remainder of the connection. '''
-		
-		# Tell server you wish to connect to this instrument
-		gc = GenCommand("LISTEN-MODE", {})
-		
-		# Send command to server and check for status
-		if not self.send_command(gc):
-			self.log.error("Failed to enter lister mode. Received fail from server.")
-			return False
-		else:
-			self.log.debug(f"Successfully entered listener mode.")
-			
-		return True
-	
 	
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This
@@ -151,17 +135,34 @@ class RemoteInstrument:
 		self.connected = True
 	
 	def remote_call(self, func_name:str, *args, **kwargs):
-		''' Calls the function 'func_name' of a remote instrument '''
+		''' Calls the function 'func_name' of a remote instrument. Asynchronous, does
+		 not wait for reply from server. '''
 		
 		arg_str = ""
+		arg_dict = {}
+		kwargs_dict = {}
+		arg_idx = 0
 		for a in args:
-			arg_str = arg_str + f"{a} "
+			arg_str = arg_str + f"{a} " # Make debug string
+			arg_dict[arg_idx] = a # Make dictionary
 		for key, value in kwargs.items():
-			arg_str = arg_str + f"{key}:{value} "
+			arg_str = arg_str + f"{key}:{value} " # Make debug string
+			kwargs_dict[key] = value # Make dictionary
 		
-		print(f"Initializing remote call: function = {func_name}, arguments = {arg_str} ")
+		# Enter debug log
+		self.log.debug(f"Initializing remote call: function = {func_name}, arguments = {arg_str} ")
 		
-		#TODO: Send command to server
+		# Create GC
+		gc = GenCommand("REMCALL", {"REMOTE-ID":self.id.remote_id, "REMOTE-ADDR":self.id.remote_addr, "FUNCTION":func_name, "ARGS": arg_dict, "KWARGS": kwargs_dict})
+		
+		# Send command to server
+		if not self.send_command(gc):
+			self.log.error("Remote call command failed. Received fail from server.")
+			return False
+		else:
+			self.log.debug(f"Successfully sent remote call command to server.")
+			
+		return True
 	
 def RemoteFunction(func):
 	'''Decorator to allow empty functions to call
