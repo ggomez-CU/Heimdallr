@@ -17,40 +17,48 @@ DATABASE_LOCATION = "userdata.db"
 class ServerMaster:
 	''' This class contains data shared between multiple clients. '''
 	
-	def __init__(self):
+	def __init__(self, master_log:LogPile):
 		
-		# Initailize ThreadSafeData object to track instruments
-		self.master_data = ThreadSafeData()
-		self.master_data.add_param("instruments")
+		# Initailize ThreadSafeDict object to track instruments
+		self.master_instruments = ThreadSafeList()
+		self.master_net_cmd = ThreadSafeList() # Contains objects describing commands to route to driver/listener clients
+		self.master_net_reply = ThreadSafeList() # Contains objects describing response data to route to terminal/command clients
+		
+		self.log = master_log
 	
 	def add_instrument(self, inst_id:Identifier) -> bool:
 		''' Adds an instrument to the network. Returns boolean for success status.'''
 		
 		# Acquire mutex
-		with self.master_data.mtx:
+		with self.master_instruments.mtx:
 		
-			# Check if remote_id or remote_addr are already used in master_data
-			if len(self.master_data.find_attr("instruments", "remote_id", inst_id.remote_id)) > 0:
+			# Check if remote_id or remote_addr are already used in master_instruments
+			if len(self.master_instruments.find_attr("remote_id", inst_id.remote_id)) > 0:
 				self.log.debug(f"Failed to add instrument because remote_id was already claimed on server.")
 				return False
-			if len(self.master_data.find_attr("instruments", "remote_addr", inst_id.remote_addr)) > 0:
+			if len(self.master_instruments.find_attr("remote_addr", inst_id.remote_addr)) > 0:
 				self.log.debug(f"Failed to add instrument because remote_addr was already claimed on server.")
 				return False
 		
 			# Add to list
-			self.master_data.append("instruments", inst_id)
+			self.master_instruments.append(inst_id)
 		
 		return True
 
-serv_master = ServerMaster()
+master_log = LogPile()
+serv_master = ServerMaster(master_log)
 
-# class HeimdallrServerAgent:
+# Define parameters that go in sa.app_data (defined so harder to mistype)
+CLIENT_LISTEN_MODE = 'client_listen_mode'
+
+def server_init_function(sa:ServerAgent):
+	''' Initializes the server agent option with any preferences for the end application.
+	Here it's just used to add feilds to the sa.app_data dict. Must return the modified
+	sa. '''
 	
-# 	def __init__(self, **kwargs):
-# 		super().__init__(**kwargs)
-		
-# 		# Look up instrument
-# 		self.instrument_lookup = []
+	sa.app_data[CLIENT_LISTEN_MODE] = False
+	
+	return sa
 
 def server_callback_send(sa:ServerAgent, gc:GenCommand):
 	''' Function passed to ServerAgents to execute custom send-commands for Heimdallr
@@ -75,6 +83,14 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 		
 		return True
 	
+	elif gc.command == "LISTEN-MODE":
+		
+		#NOTE: Skip check for fields bc none expected
+		
+		sa.app_data[CLIENT_LISTEN_MODE] = True
+		
+		return True
+	
 	# Return None if command is not recognized
 	return None
 
@@ -93,13 +109,13 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 			return gd_err
 		
 		# Acquire mutex
-		with serv_master.master_data.mtx:
+		with serv_master.master_instruments.mtx:
 		
 			# Find remote-id or remote-addr, whichever are populated.
 			if (gc.data['REMOTE-ID'] is not None) and (len(gc.data['REMOTE-ID']) > 0):
-				fidx = serv_master.master_data.find_attr("instruments", "remote_id", gc.data['REMOTE-ID'])
+				fidx = serv_master.master_instruments.find_attr("remote_id", gc.data['REMOTE-ID'])
 			else:
-				fidx = serv_master.master_data.find_attr("instruments", "remote_address", gc.data['REMOTE-ADDR'])
+				fidx = serv_master.master_instruments.find_attr("remote_address", gc.data['REMOTE-ADDR'])
 			
 			# Make sure an entry was found
 			if len(fidx) < 1:
@@ -110,11 +126,11 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 			fidx = fidx[0]
 			
 			# Access database
-			rid = serv_master.master_data.read_attr("instruments", fidx, "remote_id")
-			radr = serv_master.master_data.read_attr("instruments", fidx, "remote_addr")
-			rdvr = serv_master.master_data.read_attr("instruments", fidx, "dvr")
-			rctg = serv_master.master_data.read_attr("instruments", fidx, "ctg")
-			ridn = serv_master.master_data.read_attr("instruments", fidx, "idn_model")
+			rid = serv_master.master_instruments.read_attr(fidx, "remote_id")
+			radr = serv_master.master_instruments.read_attr(fidx, "remote_addr")
+			rdvr = serv_master.master_instruments.read_attr(fidx, "dvr")
+			rctg = serv_master.master_instruments.read_attr(fidx, "ctg")
+			ridn = serv_master.master_instruments.read_attr(fidx, "idn_model")
 		
 		# Populate GenData response
 		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})
@@ -131,21 +147,21 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 		rctg = []
 		ridn = []
 		
-		# Hold master_data across multiple operations
-		with serv_master.master_data.mtx:
+		# Hold master_instruments across multiple operations
+		with serv_master.master_instruments.mtx:
 		
 			# Get length to iterate over
-			param_len = serv_master.master_data.get_param_len("instruments")
+			param_len = serv_master.master_instruments.len()
 			
 			# Loop over length
 			for fidx in range(param_len):
 				
 				# Access database
-				rid.append(serv_master.master_data.read_attr("instruments", fidx, "remote_id"))
-				radr.append(serv_master.master_data.read_attr("instruments", fidx, "remote_addr"))
-				rdvr.append(serv_master.master_data.read_attr("instruments", fidx, "dvr"))
-				rctg.append(serv_master.master_data.read_attr("instruments", fidx, "ctg"))
-				ridn.append(serv_master.master_data.read_attr("instruments", fidx, "idn_model"))
+				rid.append(serv_master.master_instruments.read_attr(fidx, "remote_id"))
+				radr.append(serv_master.master_instruments.read_attr(fidx, "remote_addr"))
+				rdvr.append(serv_master.master_instruments.read_attr(fidx, "dvr"))
+				rctg.append(serv_master.master_instruments.read_attr(fidx, "ctg"))
+				ridn.append(serv_master.master_instruments.read_attr(fidx, "idn_model"))
 		
 		# Populate GenData response
 		gdata = GenData({"STATUS":True, "REMOTE-ID":rid, "REMOTE-ADDR": radr, "CTG":rctg, "DVR":rdvr, "IDN-MODEL":ridn})

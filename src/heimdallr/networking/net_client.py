@@ -83,7 +83,23 @@ class HeimdallrClientAgent(ClientAgent):
 		self.connected = True
 		
 		return id_list
+	
+	def begin_listener_mode(self):
+		''' Sends an instruction to the server that this client will listen for commands 
+		rather than initiate them for the remainder of the connection. '''
 		
+		# Tell server you wish to connect to this instrument
+		gc = GenCommand("LISTEN-MODE", {})
+		
+		# Send command to server and check for status
+		if not self.send_command(gc):
+			self.log.error("Failed to enter lister mode. Received fail from server.")
+			return False
+		else:
+			self.log.debug(f"Successfully entered listener mode.")
+			
+		return True
+	
 	
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This

@@ -33,7 +33,13 @@ if __name__ == '__main__':
 	scope1 = RigolDS1000Z("TCPIP0::192.168.1.20::INSTR", log, remote_id="Scope1")
 	ca.register_instrument(scope1.id)
 	
-	#TODO: Make a main loop where this just does other clients' biddings
+	# Begin main loop s.t. this client executes the instructions from the server (which receives them from other clients)
+	
 	while True:
-		
 		time.sleep(1)
+	
+	# # Begin listening mode
+	# ca.begin_listener_mode()
+	
+	# # Run main function
+	# ca.forward_commands([scope1])
