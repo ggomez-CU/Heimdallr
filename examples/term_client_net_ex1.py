@@ -23,6 +23,7 @@ if __name__ == '__main__':
 	
 	# login to server with default admin password
 	ca.login("admin", "password")
+	ca.register_client_id("terminal_main")
 	
 	# Create client options
 	copt = ClientOptions()

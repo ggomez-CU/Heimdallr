@@ -17,7 +17,8 @@ class NetworkCommand(Packable):
 		self.kwargs = {}
 		
 		# Source of command
-		self.source_client = None
+		self.to_client = None
+		self.from_client = None
 		self.timestamp = None
 		
 		# Initialize from gc if provided

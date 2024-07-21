@@ -6,11 +6,15 @@ class HeimdallrClientAgent(ClientAgent):
 	
 	def __init__(self, log:LogPile, address:str=None, port:int=None, **kwargs):
 		super().__init__(log=log, address=address, port=port, **kwargs)
+		
+		self.client_id = ""
 	
-	def register_instrument(self,id:Identifier):
+	def register_instrument(self,id:Identifier, override:bool=False):
 		''' Registers an instrument with the server so it can be found by other clients
 		as a RemoteInstrument. This essentially just tells the server this instrument
 		exists, and which incoming client to route instructions to. '''
+		
+		#TODO: Allow admin to override, replacing any currently registered instruments with this one.
 		
 		# Tell server you wish to connect to this instrument
 		gc = GenCommand("REG-INST", {"REMOTE-ID":id.remote_id, "REMOTE-ADDR":id.remote_addr, "IDN-MODEL":id.idn_model, "CTG":id.ctg, "DVR":id.dvr })
@@ -83,6 +87,25 @@ class HeimdallrClientAgent(ClientAgent):
 		self.connected = True
 		
 		return id_list
+	
+	def register_client_id(self, client_id:str, override:bool=False):
+		''' Registers this client with a specific name on the server '''
+		
+		#TODO: Allow admin to override, replacing any previous clients with this name
+		# with this one.
+		
+		# Prepare command
+		gc = GenCommand("REG-CLIENT", {"ID":client_id})
+		
+		# Send command to server and check for status
+		if not self.send_command(gc):
+			self.log.error("Failed to register client-id. Received fail from server.", detail=f"Tried to register client-id={client_id}")
+			return False
+		else:
+			self.log.debug(f"Successfully registered client as client-id={client_id}.")
+		
+		return True
+		
 	
 	
 class RemoteInstrument:

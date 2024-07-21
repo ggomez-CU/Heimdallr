@@ -20,9 +20,10 @@ class ServerMaster:
 	def __init__(self, master_log:LogPile):
 		
 		# Initailize ThreadSafeDict object to track instruments
-		self.master_instruments = ThreadSafeList()
-		self.master_net_cmd = ThreadSafeList() # Contains objects describing commands to route to driver/listener clients
-		self.master_net_reply = ThreadSafeList() # Contains objects describing response data to route to terminal/command clients
+		self.master_instruments = ThreadSafeList() # (type = Identifier)
+		self.master_net_cmd = ThreadSafeList() # Contains objects describing commands to route to driver/listener clients (Type = NetworkCommand)
+		self.master_net_reply = ThreadSafeList() # Contains objects describing response data to route to terminal/command clients (Type = GenData?)
+		self.master_client_ids = ThreadSafeList() # Contains a list of all client-ids currently present on the server (type = string)
 		
 		self.log = master_log
 	
@@ -49,15 +50,14 @@ master_log = LogPile()
 serv_master = ServerMaster(master_log)
 
 # Define parameters that go in sa.app_data (defined so harder to mistype)
-CLIENT_LISTEN_MODE = 'client_listen_mode'
+CLIENT_ID = 'client_id'
 
 def server_init_function(sa:ServerAgent):
 	''' Initializes the server agent option with any preferences for the end application.
 	Here it's just used to add feilds to the sa.app_data dict. Must return the modified
 	sa. '''
 	
-	sa.app_data[CLIENT_LISTEN_MODE] = False
-	
+	sa.app_data[CLIENT_ID] = ""
 	return sa
 
 def server_callback_send(sa:ServerAgent, gc:GenCommand):
@@ -83,6 +83,30 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 		
 		return True
 	
+	elif gc.command == "REG-CLIENT":
+		
+		# Check fields present
+		if not gc.validate_command(["ID"], log):
+			return False
+		
+		# Look for client already existing with this name
+		with serv_master.master_client_ids.mtx:
+			
+			fidx = serv_master.master_client_ids.find(gc.data['ID'])
+			if len(fidx) > 0: # client ID was found!
+				return False
+			
+			# Add to list
+			serv_master.master_client_ids.append(gc.data['ID'])
+		
+		# Save client-id to ServerAgent app_data
+		sa.app_data[CLIENT_ID] = gc.data['ID']
+		
+		ncid = gc.data['ID']
+		sa.log.debug(f"Registered client-id {ncid}")
+		
+		return True
+	
 	elif gc.command == "REMCALL":
 		
 		# Check fields present
@@ -96,7 +120,7 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 		with serv_master.master_net_cmd.mtx:
 			serv_master.master_net_cmd.append(nc)
 		
-		#TODO: Populate source_client
+		#TODO: Populate source_client in NetworkCommand object
 		
 		return True
 	

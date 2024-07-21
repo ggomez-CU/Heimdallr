@@ -37,8 +37,8 @@ if __name__ == '__main__':
 	
 	while True:
 		
-		# time.sleep(1)
-		ca.listen_command()
+		time.sleep(1)
+		# ca.listen_command()
 	
 	# # Begin listening mode
 	# ca.begin_listener_mode()
