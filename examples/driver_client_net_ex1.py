@@ -25,12 +25,13 @@ if __name__ == '__main__':
 	
 	# login to server with default admin password
 	ca.login("admin", "password")
+	ca.register_client_id("driver_main")
 	
 	# Create client options
 	copt = ClientOptions()
 	
 	# Create remote instrument and register with server
-	scope1 = RigolDS1000Z("TCPIP0::192.168.1.20::INSTR", log, remote_id="Scope1")
+	scope1 = RigolDS1000Z("TCPIP0::192.168.1.20::INSTR", log, remote_id="Scope1", client_id=ca.client_id)
 	ca.register_instrument(scope1.id)
 	
 	# Begin main loop s.t. this client executes the instructions from the server (which receives them from other clients)

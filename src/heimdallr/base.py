@@ -92,7 +92,7 @@ class Identifier:
 class Driver(ABC):
 	
 	#TODO: Modify all category and drivers to pass kwargs to super
-	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True, remote_id:str=None, host_id:HostID=None):
+	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True, remote_id:str=None, host_id:HostID=None, client_id:str=""):
 		
 		self.address = address
 		self.log = log
@@ -105,14 +105,10 @@ class Driver(ABC):
 		
 		self.online = False
 		self.rm = pv.ResourceManager()
-		self.isnt = None
+		self.inst = None
 		
-		# Populate id
-		if host_id is None:
-			self.hid = HostID()
-			
 		# Setup ID
-		self.id.remote_addr = self.hid.ip_address + "|" + self.address
+		self.id.remote_addr = client_id + "|" + self.address
 		if remote_id is not None:
 			self.id.remote_id = remote_id
 			

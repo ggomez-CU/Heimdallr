@@ -19,6 +19,8 @@ class ServerMaster:
 	
 	def __init__(self, master_log:LogPile):
 		
+		#TODO: Add way of printing status of each of these (ie. lengths of the lists)
+		
 		# Initailize ThreadSafeDict object to track instruments
 		self.master_instruments = ThreadSafeList() # (type = Identifier)
 		self.master_net_cmd = ThreadSafeList() # Contains objects describing commands to route to driver/listener clients (Type = NetworkCommand)

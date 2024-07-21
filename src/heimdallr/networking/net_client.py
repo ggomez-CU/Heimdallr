@@ -14,6 +14,10 @@ class HeimdallrClientAgent(ClientAgent):
 		as a RemoteInstrument. This essentially just tells the server this instrument
 		exists, and which incoming client to route instructions to. '''
 		
+		if len(self.client_id) == 0:
+			self.log.warning("Cannot register instruments until the client has registered under a valid Client-ID.")
+			return False
+		
 		#TODO: Allow admin to override, replacing any currently registered instruments with this one.
 		
 		# Tell server you wish to connect to this instrument
@@ -104,6 +108,9 @@ class HeimdallrClientAgent(ClientAgent):
 		else:
 			self.log.debug(f"Successfully registered client as client-id={client_id}.")
 		
+		# Registration was successful - assign new ID
+		self.client_id = client_id
+		
 		return True
 		
 	
@@ -179,7 +186,7 @@ class RemoteInstrument:
 		gc = GenCommand("REMCALL", {"REMOTE-ID":self.id.remote_id, "REMOTE-ADDR":self.id.remote_addr, "FUNCTION":func_name, "ARGS": arg_dict, "KWARGS": kwargs_dict})
 		
 		# Send command to server
-		if not self.send_command(gc):
+		if not self.client_agent.send_command(gc):
 			self.log.error("Remote call command failed. Received fail from server.")
 			return False
 		else:
