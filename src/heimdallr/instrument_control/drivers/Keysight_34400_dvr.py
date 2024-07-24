@@ -93,4 +93,5 @@ class Keysight34400(DigitalMultimeterCtg1):
 		''' Tells the instrument to read and returns teh measurement result. '''
 		
 		self.send_manual_trigger(send_cls=True)
+		self.wait_ready()
 		return self.get_last_value()
