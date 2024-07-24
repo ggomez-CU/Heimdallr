@@ -14,15 +14,15 @@ class LakeShoreModel335(PIDTemperatureControllerCtg):
 	RANGE_HIGH = 3
 	
 	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log)
+		super().__init__(address, log, expected_idn="LSCI,MODEL335,335")
 	
 	def set_setpoint(self, temp_K:float, channel:int=1):
 		self.inst.write(f"SETP {channel},{temp_K}")
 	def get_setpoint(self, channel:int=1):
 		return float(self.inst.query(f"SETP? {channel}"))
 	
-	def get_temp(self, temp_K:float, channel:int=1):
-		return float(self.inst.query(f"SETP? {channel}"))
+	def get_temp(self, channel:int=1):
+		return float(self.inst.query(f"KRDG? {channel}"))
 	
 	def set_pid(self, P:float, I:float, D:float, channel:int=1):
 		P = max(0.1, min(P, 1000))
