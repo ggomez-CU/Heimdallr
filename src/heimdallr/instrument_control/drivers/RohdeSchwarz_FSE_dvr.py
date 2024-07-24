@@ -149,24 +149,3 @@ class RohdeSchwarzFSE(SpectrumAnalyzerCtg):
 		# # Query data
 		# return self.query(f"CALC{channel}:DATA? SDATA")
 		
-	
-		
-	# def set_averaging_enable(self, enable:bool, channel:int=1):
-	# 	self.write(f"SENS{channel}:AVER {bool_to_ONFOFF(enable)}")
-	# def get_averaging_enable(self, channel:int=1):
-	# 	return str_to_bool(self.write(f"SENS{channel}:AVER?"))
-	
-	# def set_averaging_count(self, count:int, channel:int=1):
-	# 	count = int(max(1, min(count, 65536)))
-	# 	if count != count:
-	# 		self.log.error(f"Did not apply command. Instrument limits values to integers 1-65536 and this range was violated.")
-	# 		return
-	# 	self.write(f"SENS{channel}:AVER:COUN {count}")
-	# def get_averaging_count(self, channel:int=1):
-	# 	return int(self.query(f"SENS{channel}:AVER:COUN?"))
-	
-	# def send_clear_averaging(self, channel:int=1):
-	# 	self.write(f"SENS{channel}:AVER:CLE")
-	
-	# def send_preset(self):
-	# 	self.write("SYST:PRES")
