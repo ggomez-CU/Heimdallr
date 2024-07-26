@@ -28,4 +28,4 @@ sock.listen()
 if __name__ == "__main__":
 	
 	# Run server main loop
-	server_main(sock, query_func=server_callback_query, send_func=server_callback_send)
+	server_main(sock, query_func=server_callback_query, send_func=server_callback_send, sa_init_func=server_init_function)
