@@ -112,8 +112,43 @@ class HeimdallrClientAgent(ClientAgent):
 		self.client_id = client_id
 		
 		return True
-		
 	
+	def dl_listen(self):
+		'''(For Driver/Listener clients) Asks the server for any latent NetworkCommand 
+		objects from Terminal/Command clients. The server will check repeatedly until a
+		timeout occurs (set DL_LISTEN_TIMEOUT_OPTION and DL_LISTEN_CHECK_OPTION in
+		server_master, both index zero). Will execute any latent commands.
+		
+		Returns None if error, else list of NetworkCommand objects to execute.
+		'''
+		
+		# Prepare general command
+		gc = GenCommand("DL-LISTEN", {})
+		
+		# Send command and get reply
+		data_packet = self.query_command(gc)
+		
+		# Check for missing packet
+		if data_packet is None:
+			self.log.error(f"DL-LISTEN received no datapacket.")
+			self.connected = False
+			return None
+		
+		# Check for error in packet
+		if not data_packet.validate_reply(['STATUS', 'NETCOMS'], self.log):
+			self.log.error(f"DL-LISTEN received invalid GenData reply.")
+			self.connected = False
+			return None
+		
+		# Unpack all received netcoms
+		netcoms = []
+		for ncp in data_packet.data['NETCOMS']:
+			
+			# Create NC from unpacking string
+			nc = NetworkCommand()
+			netcoms.append(nc.unpack(ncp))
+		
+		return netcoms
 	
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This

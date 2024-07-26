@@ -10,7 +10,11 @@ from heimdallr.networking.net_server import *
 # Parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--local', help="Use localhost instead of intranet address.", action='store_true')
+parser.add_argument('-d', '--detail', help="Show detailed log messages.", action='store_true')
 args = parser.parse_args()
+
+# Configure serv_master
+serv_master.log.str_format.show_detail = args.detail
 
 # Create socket - this is not protected by a mutex and should only ever be used by the main thread
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

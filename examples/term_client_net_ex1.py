@@ -4,6 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--local', help="Use localhost instead of intranet address.", action='store_true')
+parser.add_argument('-d', '--detail', help="Show detailed log messages.", action='store_true')
 args = parser.parse_args()
 
 # Create socket - this is not protected by a mutex and should only ever be used by the main thread
@@ -15,6 +16,7 @@ else:
 if __name__ == '__main__':
 	
 	log = LogPile()
+	log.str_format.show_detail = args.detail
 	
 	# Create client agent
 	ca = HeimdallrClientAgent(log)
@@ -34,8 +36,6 @@ if __name__ == '__main__':
 	# rem_osc1 = RemoteInstrument(ca, log, remote_address="192.168.1.117|TCPIP0::192.168.1.20::INSTR")
 	rem_osc1 = RemoteInstrument(ca, log, remote_id="Scope1")
 	
-	# TODO: Change current register_instrument to something like find instrument
-	# TODO: Make register_instrument accept an Instrument object
 	# rem_osc1.locate_instrument(rem_osc1)
 	
 	if rem_osc1.connected:
@@ -45,7 +45,6 @@ if __name__ == '__main__':
 	else:
 		log.error(f"Failed to connect rem_osc1 to remote instrument!")
 	
-	#TODO: Do things with rem_osc1 like set the voltage or whatever
 	while True:
 		
 		a = input("Press enter to set volts/div to 1.")

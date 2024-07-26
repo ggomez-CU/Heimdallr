@@ -8,6 +8,7 @@ from socket import getaddrinfo, gethostname
 import ipaddress
 import fnmatch
 
+
 def get_ip(ip_addr_proto="ipv4", ignore_local_ips=True):
 	# By default, this method only returns non-local IPv4 addresses
 	# To return IPv6 only, call get_ip('ipv6')
@@ -285,26 +286,6 @@ class Driver(ABC):
 			self.log.error(f"Failed to query instrument {self.address}. ({e})")
 			self.online = False
 			return None
-
-class DriverManager:
-	''' Accepts a number of driver instances and allows them to be interacted with
-	over a network.
-	'''
-	
-	#TODO: Implement multi-threading
-	
-	def __init__(self):
-		self.drivers = []
-	
-	def route_command(self, remote_id:str, command:str):
-		''' Accepts a command and remote-id and '''
-		pass
-		
-		#TODO: Find if remote_id is in driver list, and route command
-	
-	def add_instrument(self, dvr:Driver):
-		
-		pass
 
 def bool_to_str01(val:bool):
 	''' Converts a boolean value to 0/1 as a string '''

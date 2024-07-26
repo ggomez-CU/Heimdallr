@@ -13,6 +13,8 @@ from dataclasses import dataclass
 
 # TODO: Make this configurable and not present in most client copies
 DATABASE_LOCATION = "userdata.db"
+DL_LISTEN_TIMEOUT_OPTION = "DL_LISTEN_TIMEOUT"
+DL_LISTEN_CHECK_OPTION = "DL_LISTEN_CHECK_TIME"
 
 class ServerMaster:
 	''' This class contains data shared between multiple clients. '''
@@ -20,6 +22,17 @@ class ServerMaster:
 	def __init__(self, master_log:LogPile):
 		
 		#TODO: Add way of printing status of each of these (ie. lengths of the lists)
+		
+		# Create user configurable options
+		self.options = ThreadSafeDict()
+		
+		# Add option: Timeout for DL-LISTEN GenCommands
+		self.options.add_param(DL_LISTEN_TIMEOUT_OPTION)
+		self.options.set(DL_LISTEN_TIMEOUT_OPTION, idx=0, val=0.5) # Set timeout (seconds) to 0.1
+		
+		# Add option: Period in between checks for DL-LISTEN GenCommands
+		self.options.add_param(DL_LISTEN_CHECK_OPTION)
+		self.options.set(DL_LISTEN_CHECK_OPTION, idx=0, val=0.2) # Set timeout (seconds) to 0.1
 		
 		# Initailize ThreadSafeDict object to track instruments
 		self.master_instruments = ThreadSafeList() # (type = Identifier)
@@ -118,6 +131,10 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 		# Create a NetworkCommand object
 		nc = NetworkCommand(gc=gc)
 		
+		# Populate source-client ID
+		nc.source_client = sa.app_data[CLIENT_ID]
+		nc.timestamp = (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
+		
 		# Add to master net command
 		with serv_master.master_net_cmd.mtx:
 			serv_master.master_net_cmd.append(nc)
@@ -206,9 +223,64 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 		
 		#NOTE: Validation not performed because no additional parameters are expected
 		
-		# Look for NetworkCommand objects assigned to this client
+		# Get timeout time from server master
+		with serv_master.options.mtx:
+			timeout_s = serv_master.options.read(DL_LISTEN_TIMEOUT_OPTION, 0)
+			t_check_s = serv_master.options.read(DL_LISTEN_CHECK_OPTION, 0)
 		
-		# Prepare a GenData object with all NetworkCommand objects included
+		# Check for option read error
+		if timeout_s is None:
+			timeout_s = 0.5
+		if t_check_s is None:
+			t_check_s = 0.2
+		
+		# Record start time
+		t0 = time.time()
+		
+		# Loop until timeout or commands found
+		fid = []
+		while True:
+			
+			# Access mutex
+			with serv_master.master_net_cmd.mtx:
+				
+				# Look for NetworkCommands addressed to this client-id
+				fid = serv_master.master_net_cmd.find_attr("target_client", sa.app_data[CLIENT_ID])
+				
+				# If any commands are found...
+				if len(fid) != 0:
+					
+					# Process each command
+					nc_list = []
+					for idx in fid:
+						
+						# Access each net command
+						nc = serv_master.master_net_cmd.read(idx)
+						
+						# Pack NetworkCommand and add to list
+						nc_list.append(nc.pack())
+						
+					# Create GenData for reply
+					gdata = GenData({"STATUS":True, "NETCOMS":nc_list})
+					serv_master.log.debug(f"Sending {len(nc_list)} NetComs to D/L client.", detail=f"List contents: {nc_list}")
+					
+					# Delete processed commands
+					for idx in fid:
+						serv_master.master_net_cmd.remove(idx)
+						
+					# Exit loop
+					break
+			
+			# Break if timeout
+			if time.time() >= t0 + timeout_s:
+				
+				# Create GenData for reply
+				gdata = GenData({"STATUS":True, "NETCOMS":[]})
+				
+				break
+			
+			# Pause before checking again
+			time.sleep(t_check_s)
 		
 		return gdata
 		
