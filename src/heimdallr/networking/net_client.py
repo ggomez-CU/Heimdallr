@@ -144,9 +144,16 @@ class HeimdallrClientAgent(ClientAgent):
 		netcoms = []
 		for ncp in data_packet.data['NETCOMS']:
 			
+			print(f"NCP = {ncp}")
+			
 			# Create NC from unpacking string
 			nc = NetworkCommand()
-			netcoms.append(nc.unpack(ncp))
+			nc.unpack(ncp)
+			
+			# Add to list
+			netcoms.append(nc)
+		
+		print(f"netcoms = {netcoms}")
 		
 		return netcoms
 	
@@ -210,6 +217,7 @@ class RemoteInstrument:
 		for a in args:
 			arg_str = arg_str + f"{a} " # Make debug string
 			arg_dict[arg_idx] = a # Make dictionary
+			arg_idx += 1
 		for key, value in kwargs.items():
 			arg_str = arg_str + f"{key}:{value} " # Make debug string
 			kwargs_dict[key] = value # Make dictionary

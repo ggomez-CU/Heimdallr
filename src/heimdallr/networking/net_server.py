@@ -282,6 +282,7 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 			# Pause before checking again
 			time.sleep(t_check_s)
 		
+		# Return packet
 		return gdata
 		
 	# Return None if command is not recognized
