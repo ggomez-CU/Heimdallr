@@ -13,6 +13,27 @@ if args.local:
 else:
 	ip_address = "192.168.1.116"
 
+# def interp_kwarg(x:str):
+# 	''' 
+	
+# 		num>  = Remainder of line will be interpreted as a float
+# 		str>  = Remainder of line is string 
+# 		dict> = Remainder of line will  be interpreted as a dict
+		
+# 		:send  = Send remote call
+# 		:abort = cancel remote call
+	
+# 	Returns a tuple with two values. Index 0: Status int, Index 1: Value
+	
+# 	Status ints:
+# 		0 = Error, index1=None
+		
+# 	'''
+	
+# 	if len(x) < 4
+	
+	
+
 if __name__ == '__main__':
 	
 	log = LogPile()
@@ -47,8 +68,11 @@ if __name__ == '__main__':
 	
 	while True:
 		
-		a = input("Press enter to set volts/div to 1.")
+	# 	print(f"{Fore.GREEN}Remote Call:{Style.RESET_ALL}")
+	# 	a = input(f"{Fore.CYAN}\tFunction: {Style.RESET_ALL}")
+	# 	a = input(f"{Fore.YELLOW}\t(kw)arg (help for help): {Style.RESET_ALL}")
 		
+		a = input("Press enter to set volts/div to 1.")
 		rem_osc1.remote_call("set_div_volt", 1, 1)
 		
 		
