@@ -44,6 +44,6 @@ class SpectrumAnalyzerRemote(RemoteInstrument):
 		self.remote_call('set_freq_start', f_Hz, channel)
 	
 	# With the decorator, it looks like this
-	@RemoteFunction
+	@remotefunction
 	def set_freq_end(self, f_Hz:float, channel:int=1):
 		pass

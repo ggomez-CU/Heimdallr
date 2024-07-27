@@ -237,7 +237,7 @@ class RemoteInstrument:
 			
 		return True
 	
-def RemoteFunction(func):
+def remotefunction(func):
 	'''Decorator to allow empty functions to call
 	their remote counterparts'''
 	

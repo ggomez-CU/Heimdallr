@@ -55,7 +55,8 @@ if __name__ == '__main__':
 	
 	# Create remote instruments from address
 	# rem_osc1 = RemoteInstrument(ca, log, remote_address="192.168.1.117|TCPIP0::192.168.1.20::INSTR")
-	rem_osc1 = RemoteInstrument(ca, log, remote_id="Scope1")
+	# rem_osc1 = RemoteInstrument(ca, log, remote_id="Scope1")
+	rem_osc1 = RemoteOscilloscopeCtg1(ca, log, remote_id="Scope1")
 	
 	# rem_osc1.locate_instrument(rem_osc1)
 	
