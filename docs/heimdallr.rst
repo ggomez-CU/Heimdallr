@@ -29,10 +29,10 @@ heimdallr.base module
    :undoc-members:
    :show-inheritance:
 
-heimdallr.network module
+heimdallr.networking module
 ------------------------
 
-.. automodule:: heimdallr.network
+.. automodule:: heimdallr.networking
    :members:
    :undoc-members:
    :show-inheritance:

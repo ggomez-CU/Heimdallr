@@ -1,77 +1,127 @@
 import pyvisa as pv
-from pylogfile import *
+from pylogfile.base import *
 import numpy as np
 import time
 import inspect
 from abc import ABC, abstractmethod
+from socket import getaddrinfo, gethostname
+import ipaddress
+import fnmatch
+
+
+def get_ip(ip_addr_proto="ipv4", ignore_local_ips=True):
+	# By default, this method only returns non-local IPv4 addresses
+	# To return IPv6 only, call get_ip('ipv6')
+	# To return both IPv4 and IPv6, call get_ip('both')
+	# To return local IPs, call get_ip(None, False)
+	# Can combine options like so get_ip('both', False)
+	#
+	# Thanks 'Geruta' from Stack Overflow: https://stackoverflow.com/questions/24196932/how-can-i-get-the-ip-address-from-a-nic-network-interface-controller-in-python
+
+	af_inet = 2
+	if ip_addr_proto == "ipv6":
+		af_inet = 30
+	elif ip_addr_proto == "both":
+		af_inet = 0
+
+	system_ip_list = getaddrinfo(gethostname(), None, af_inet, 1, 0)
+	ip_list = []
+
+	for ip in system_ip_list:
+		ip = ip[4][0]
+
+		try:
+			ipaddress.ip_address(str(ip))
+			ip_address_valid = True
+		except ValueError:
+			ip_address_valid = False
+		else:
+			if ipaddress.ip_address(ip).is_loopback and ignore_local_ips or ipaddress.ip_address(ip).is_link_local and ignore_local_ips:
+				pass
+			elif ip_address_valid:
+				ip_list.append(ip)
+
+	return ip_list
+
+def wildcard(test:str, pattern:str):
+	return len(fnmatch.filter([test], pattern)) > 0
+
+class HostID:
+	''' Contains the IP address and host-name for the host. Primarily used
+	so drivers can quickly identify the host's IP address.'''
+	
+	def __init__(self, target_ips:str=["192.168.1.*", "192.168.*.*"]):
+		''' Identifies the ipv4 address and host-name of the host.'''
+		self.ip_address = ""
+		self.host_name = ""
+		
+		# Get list of IP address for each network adapter
+		ip_list = get_ip()
+		
+		# Scan over list and check each
+		for target_ip in target_ips:
+			for ipl in ip_list:
+				
+				# Check for match
+				if wildcard(ipl, target_ip):
+					self.ip_address = ipl
+					break
+		
+		self.host_name = gethostname()
+	
+	def __str__(self):
+		
+		return f"ip-address: {self.ip_address}\nhost-name: {self.host_name}"
 
 class Identifier:
+	''' Data to identify a specific instrument driver instance. Contains
+	its location on a network (if applicable), rich-name, class type, and
+	identification string provided by the instrument.'''
 	
 	def __init__(self):
 		self.idn_model = "" # Identifier provided by instrument itself (*IDN?)
 		self.ctg = "" # Category class of driver
 		self.dvr = "" # Driver class
-		self.name = "" # Rich name provided by user (optional)
-
-class RemoteInstrument:
-	''' Class to represent an instrument driven by another host on this network. This
-	class allows remote clients to control the instrument, despite not having a 
-	connection or driver locally.
-	'''
-	
-	def __init__(self):
-		self.net_id = "RohdeSchwarz-FSQ"
-		self.client_agent = None
-	
-	def remote_call(self, func_name:str, *args, **kwargs):
-		''' Calls the function 'func_name' of a remote instrument '''
 		
-		arg_str = ""
-		for a in args:
-			arg_str = arg_str + f"{a} "
-		for key, value in kwargs.items():
-			arg_str = arg_str + f"{key}:{value} "
+		self.remote_id = "" # Rich name authenticated by the server and used to lookup the remote address
+		self.remote_addr = "" # String IP address of driver host, pipe, then instrument VISA address.
 		
-		print(f"Initializing remote call: function = {func_name}, arguments = {arg_str} ")
-
-def RemoteFunction(func):
-	'''Decorator to allow empty functions to call
-	their remote counterparts'''
-	
-	def wrapper(self, *args, **kwargs):
-		self.remote_call(func.__name__, *args, **kwargs)
-		func(self, *args, **kwargs)
-	return wrapper
-
-class SpectrumAnalyzerRemote(RemoteInstrument):
-	
-	def __init__(self):
-		super().__init__()
-	
-	# Without the decorator, it looks like this
-	def set_freq_start(self, f_Hz:float, channel:int=1):
-		self.remote_call('set_freq_start', f_Hz, channel)
-	
-	# With the decorator, it looks like this
-	@RemoteFunction
-	def set_freq_end(self, f_Hz:float, channel:int=1):
-		pass
+	def __str__(self):
+		
+		return f"idn_model: {self.idn_model}\ncategory: {self.ctg}\ndriver-class: {self.dvr}\nremote-id: {self.remote_id}\nremote-addr: {self.remote_addr}"
 
 class Driver(ABC):
 	
-	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True):
+	#TODO: Modify all category and drivers to pass kwargs to super
+	def __init__(self, address:str, log:LogPile, expected_idn:str="", is_scpi:bool=True, remote_id:str=None, host_id:HostID=None, client_id:str=""):
 		
 		self.address = address
 		self.log = log
 		self.is_scpi = is_scpi
+		self.hid = host_id
 		
 		self.id = Identifier()
-		self.expected_idn = expected_idn 
+		self.expected_idn = expected_idn
 		self.verified_hardware = False
 		
 		self.online = False
 		self.rm = pv.ResourceManager()
-		self.isnt = None
+		self.inst = None
+		
+		# Setup ID
+		self.id.remote_addr = client_id + "|" + self.address
+		if remote_id is not None:
+			self.id.remote_id = remote_id
+			
+		# Get category
+		inheritance_list = inspect.getmro(self.__class__)
+		dvr_o = inheritance_list[0]
+		ctg_o = inheritance_list[1]
+		self.id.ctg = f"{ctg_o}"
+		self.id.dvr = f"{dvr_o}"
+		
+		#TODO: Automatically reconnect
+		# Connect instrument
 		self.connect()
 	
 	def connect(self, check_id:bool=True):
@@ -111,7 +161,7 @@ class Driver(ABC):
 			return
 		
 		# Query IDN model
-		self.id.idn_model = self.query("*IDN?")
+		self.id.idn_model = self.query("*IDN?").strip()
 		
 		if self.id.idn_model is not None:
 			self.online = True
