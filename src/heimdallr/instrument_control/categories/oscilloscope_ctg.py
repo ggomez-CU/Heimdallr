@@ -16,7 +16,7 @@ class OscilloscopeCtg1(OscilloscopeCtg0):
 		pass
 	
 	@abstractmethod
-	def get_div_time(self, channel:int):
+	def get_div_time(self):
 		pass
 	
 	@abstractmethod
@@ -53,7 +53,7 @@ class RemoteOscilloscopeCtg1(RemoteInstrument):
 		pass
 	
 	@remotefunction
-	def get_div_time(self, channel:int):
+	def get_div_time(self):
 		pass
 	
 	@remotefunction

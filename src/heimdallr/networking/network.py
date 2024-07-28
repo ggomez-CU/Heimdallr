@@ -149,7 +149,7 @@ class DriverManager:
 		try:
 			rval = func_handle(*args, **command.kwargs)
 		except TypeError as e:
-			self.log.error(f"DriverManager unable to route command because the specified function did not accept the provided arguemnts.", detail=f"Error message: ({e})")
+			self.log.error(f"DriverManager unable to route command because the specified function did not accept the provided arguemnts.", detail=f"Error message: ({e}). Args={args}, kwargs={command.kwargs}")
 			return (False, None)
 		
 		# Return success code and return value from function (may be NOne)
@@ -171,16 +171,16 @@ class DriverManager:
 				
 				# Send back a gencommand indicating: This is a remote_call return, the value returned successfully, the original function call was X, the T/C client that should receive this message is Y, and the return value from the function is Z (can be None).
 				
-				GenCommand("REMREPLY", {"RCALL_STATUS":True, "LOCAL_RCALL_ID":nc.local_rcall_id, "RVAL":status_rval[1], "REMOTE-ID": nc.remote_id, "REMOTE-ADDR": nc.remote_addr, "REPLYTO_CLIENT": nc.source_client})
+				gc = GenCommand("REMREPLY", {"RCALL_STATUS":True, "LOCAL_RCALL_ID":nc.local_rcall_id, "RVAL":status_rval[1], "REMOTE-ID": nc.remote_id, "REMOTE-ADDR": nc.remote_addr, "REPLYTO_CLIENT": nc.source_client})
 				
 		except:
 			self.log.error(f"DriverManager.route_command() returned an invalid tuple! This could is likely an error with route_command().")
 			
 			# Send back a gencommand indicating: THis is a remote_call return, the value returned as an error, the original function call was X, the T/C client that should receive this message is Y.
-			GenCommand("REMREPLY", {"RCALL_STATUS":False, "LOCAL_RCALL_ID":nc.local_rcall_id, "RVAL":None, "REMOTE-ID": nc.remote_id, "REMOTE-ADDR": nc.remote_addr, "REPLYTO_CLIENT": nc.source_client})
+			gc = GenCommand("REMREPLY", {"RCALL_STATUS":False, "LOCAL_RCALL_ID":nc.local_rcall_id, "RVAL":None, "REMOTE-ID": nc.remote_id, "REMOTE-ADDR": nc.remote_addr, "REPLYTO_CLIENT": nc.source_client})
 		
 		# Send command to server and check for status
-		if not self.send_command(gc):
+		if not self.ca.send_command(gc):
 			self.log.error("Failed to send remote call reply. Received fail from server.")
 			return False
 		else:

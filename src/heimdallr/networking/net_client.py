@@ -211,7 +211,7 @@ class RemoteInstrument:
 		
 		self.last_remote_call_id = 0
 		self.synchronous_reply_timeout_s = 15 # Time waited for a reply on synchronous calls. Set to -1 for infinite.
-		self.synchronous_reply_period_s = 5 # Interval to wait between reply checks
+		self.synchronous_reply_period_s = 0.1 # Interval to wait between reply checks
 		
 		self.connected = False # True if sucessfully connected to a remote instrument via server.
 		

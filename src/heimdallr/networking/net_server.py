@@ -161,7 +161,7 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 	elif gc.command == "REMREPLY":
 		
 		# Check fields present
-		if not gc.validate_command(["RCALL_STATUS", "LOCAL_RCALL_ID", "REMOTE-ID", "REMOTE-ADDR", "RVAL", "REPLYTO-CLIENT"], log):
+		if not gc.validate_command(["RCALL_STATUS", "LOCAL_RCALL_ID", "REMOTE-ID", "REMOTE-ADDR", "RVAL", "REPLYTO_CLIENT"], log):
 			return False
 		
 		# Create a NetworkCommand object
