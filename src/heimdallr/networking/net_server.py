@@ -15,6 +15,8 @@ from dataclasses import dataclass
 DATABASE_LOCATION = "userdata.db"
 DL_LISTEN_TIMEOUT_OPTION = "DL_LISTEN_TIMEOUT"
 DL_LISTEN_CHECK_OPTION = "DL_LISTEN_CHECK_TIME"
+TC_LISTEN_TIMEOUT_OPTION = "TC_LISTEN_TIMEOUT"
+TC_LISTEN_CHECK_OPTION = "TC_LISTEN_CHECK_TIME"
 
 class ServerMaster:
 	''' This class contains data shared between multiple clients. '''
@@ -32,12 +34,20 @@ class ServerMaster:
 		
 		# Add option: Period in between checks for DL-LISTEN GenCommands
 		self.options.add_param(DL_LISTEN_CHECK_OPTION)
-		self.options.set(DL_LISTEN_CHECK_OPTION, idx=0, val=0.2) # Set timeout (seconds) to 0.1
+		self.options.set(DL_LISTEN_CHECK_OPTION, idx=0, val=0.2) # Set tvimeout (seconds) to 0.1
+		
+		# Add option: Timeout for TC-LISTEN GenCommands
+		self.options.add_param(TC_LISTEN_TIMEOUT_OPTION)
+		self.options.set(TC_LISTEN_TIMEOUT_OPTION, idx=0, val=0.1) # Set timeout (seconds) to 0.1
+		
+		# Add option: Period in between checks for TC-LISTEN GenCommands
+		self.options.add_param(TC_LISTEN_CHECK_OPTION)
+		self.options.set(TC_LISTEN_CHECK_OPTION, idx=0, val=0.05) # Set timeout (seconds) to 0.1
 		
 		# Initailize ThreadSafeDict object to track instruments
 		self.master_instruments = ThreadSafeList() # (type = Identifier)
 		self.master_net_cmd = ThreadSafeList() # Contains objects describing commands to route to driver/listener clients (Type = NetworkCommand)
-		self.master_net_reply = ThreadSafeList() # Contains objects describing response data to route to terminal/command clients (Type = GenData?)
+		self.master_net_reply = ThreadSafeList() # Contains objects describing replies to network commands(Type = NetworkReply)
 		self.master_client_ids = ThreadSafeList() # Contains a list of all client-ids currently present on the server (type = string)
 		
 		self.log = master_log
@@ -125,7 +135,7 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 	elif gc.command == "REMCALL":
 		
 		# Check fields present
-		if not gc.validate_command(["REMOTE-ID", "REMOTE-ADDR", "FUNCTION", "ARGS", "KWARGS"], log):
+		if not gc.validate_command(["LOCAL_RCALL_ID", "REMOTE-ID", "REMOTE-ADDR", "FUNCTION", "ARGS", "KWARGS"], log):
 			return False
 		
 		# Create a NetworkCommand object
@@ -139,7 +149,34 @@ def server_callback_send(sa:ServerAgent, gc:GenCommand):
 		with serv_master.master_net_cmd.mtx:
 			serv_master.master_net_cmd.append(nc)
 		
-		#TODO: Populate source_client in NetworkCommand object
+		#TODO: Have the server periodically check that all NetworkCommand objects
+		#      correspond to target_clients that exist. Purge those that are more 
+		#      than X amount old.
+		
+		#TODO: This command should only be callable when the client is logged in.
+		#      you should first check that a client has been authorized.
+		
+		return True
+	
+	elif gc.command == "REMREPLY":
+		
+		# Check fields present
+		if not gc.validate_command(["RCALL_STATUS", "LOCAL_RCALL_ID", "REMOTE-ID", "REMOTE-ADDR", "RVAL", "REPLYTO-CLIENT"], log):
+			return False
+		
+		# Create a NetworkCommand object
+		nr = NetworkReply(gc=gc)
+		
+		# Add to master net command
+		with serv_master.master_net_reply.mtx:
+			serv_master.master_net_reply.append(nr)
+		
+		#TODO: Have the server periodically check that all NetworkReply objects
+		#      correspond to target_clients that exist. Purge those that are more 
+		#      than X amount old.
+		
+		#TODO: This command should only be callable when the client is logged in.
+		#      you should first check that a client has been authorized.
 		
 		return True
 	
@@ -276,6 +313,72 @@ def server_callback_query(sa:ServerAgent, gc:GenCommand):
 				
 				# Create GenData for reply
 				gdata = GenData({"STATUS":True, "NETCOMS":[]})
+				
+				break
+			
+			# Pause before checking again
+			time.sleep(t_check_s)
+		
+		# Return packet
+		return gdata
+	
+	elif gc.command == "TC-LISTEN": # Terminal/Command client is listening for replies from D/L clients via the server
+		
+		#NOTE: Validation not performed because no additional parameters are expected
+		
+		# Get timeout time from server master
+		with serv_master.options.mtx:
+			timeout_s = serv_master.options.read(TC_LISTEN_TIMEOUT_OPTION, 0)
+			t_check_s = serv_master.options.read(TC_LISTEN_CHECK_OPTION, 0)
+		
+		# Check for option read error
+		if timeout_s is None:
+			timeout_s = 0.1
+		if t_check_s is None:
+			t_check_s = 0.05
+		
+		# Record start time
+		t0 = time.time()
+		
+		# Loop until timeout or commands found
+		fid = []
+		while True:
+			
+			# Access mutex
+			with serv_master.master_net_reply.mtx:
+				
+				# Look for NetworkReplies addressed to this client-id
+				fid = serv_master.master_net_reply.find_attr("replyto_client", sa.app_data[CLIENT_ID])
+				
+				# If any replies are found...
+				if len(fid) != 0:
+					
+					# Process each reply
+					nr_list = []
+					for idx in fid:
+						
+						# Access each net reply
+						nr = serv_master.master_net_reply.read(idx)
+						
+						# Pack NetworkReply and add to list
+						nr_list.append(nr.pack())
+						
+					# Create GenData for reply
+					gdata = GenData({"STATUS":True, "NETREPLS":nr_list})
+					serv_master.log.debug(f"Sending {len(nr_list)} NetReplys to T/C client.", detail=f"List contents: {nr_list}")
+					
+					# Delete processed commands
+					for idx in fid:
+						serv_master.master_net_reply.remove(idx)
+						
+					# Exit loop
+					break
+			
+			# Break if timeout
+			if time.time() >= t0 + timeout_s:
+				
+				# Create GenData for reply
+				gdata = GenData({"STATUS":True, "NETREPLS":[]})
 				
 				break
 			

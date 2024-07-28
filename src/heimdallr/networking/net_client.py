@@ -144,8 +144,6 @@ class HeimdallrClientAgent(ClientAgent):
 		netcoms = []
 		for ncp in data_packet.data['NETCOMS']:
 			
-			print(f"NCP = {ncp}")
-			
 			# Create NC from unpacking string
 			nc = NetworkCommand()
 			nc.unpack(ncp)
@@ -153,17 +151,55 @@ class HeimdallrClientAgent(ClientAgent):
 			# Add to list
 			netcoms.append(nc)
 		
-		print(f"netcoms = {netcoms}")
-		
 		return netcoms
 	
+	def tc_listen(self):
+		'''(For Terminal/Command clients) Asks the server for any latent NetworkReply 
+		objects from Driver/Listener clients. The server will check repeatedly until a
+		timeout occurs (set TC_LISTEN_TIMEOUT_OPTION and TC_LISTEN_CHECK_OPTION in
+		server_master, both index zero). Will execute any latent commands.
+		
+		Returns None if error, else list of NetworkReply objects to execute.
+		'''
+		
+		# Prepare general command
+		gc = GenCommand("TC-LISTEN", {})
+		
+		# Send command and get reply
+		data_packet = self.query_command(gc)
+		
+		# Check for missing packet
+		if data_packet is None:
+			self.log.error(f"TC-LISTEN received no datapacket.")
+			self.connected = False
+			return None
+		
+		# Check for error in packet
+		if not data_packet.validate_reply(['STATUS', 'NETREPLS'], self.log):
+			self.log.error(f"TC-LISTEN received invalid GenData reply.")
+			self.connected = False
+			return None
+		
+		# Unpack all received netreplies
+		netrepls = []
+		for nrp in data_packet.data['NETREPLS']:
+			
+			# Create NC from unpacking string
+			nr = NetworkReply()
+			nr.unpack(nrp)
+			
+			# Add to list
+			netrepls.append(nr)
+		
+		return netrepls
+
 class RemoteInstrument:
 	''' Class to represent an instrument driven by another host on this network. This
 	class allows remote clients to control the instrument, despite not having a 
 	connection or driver locally.
 	'''
 	
-	def __init__(self, ca:ClientAgent, log:LogPile, remote_id:str=None, remote_address:str=None):
+	def __init__(self, ca:HeimdallrClientAgent, log:LogPile, remote_id:str=None, remote_address:str=None):
 		
 		# Populate id
 		self.id = Identifier()
@@ -172,6 +208,10 @@ class RemoteInstrument:
 		
 		self.log = log
 		self.client_agent = ca
+		
+		self.last_remote_call_id = 0
+		self.synchronous_reply_timeout_s = 15 # Time waited for a reply on synchronous calls. Set to -1 for infinite.
+		self.synchronous_reply_period_s = 5 # Interval to wait between reply checks
 		
 		self.connected = False # True if sucessfully connected to a remote instrument via server.
 		
@@ -208,7 +248,10 @@ class RemoteInstrument:
 	
 	def remote_call(self, func_name:str, *args, **kwargs):
 		''' Calls the function 'func_name' of a remote instrument. Asynchronous, does
-		 not wait for reply from server. '''
+		 not wait for reply from server. However, this function is compatible with 
+		 synchronous operation if you use sync_reply to force receive a reply before initializing another remote_call. Otherwise, multiple remote_call()s can be
+		 sent, and asyncronously have their replies handled using the ClientAgent's
+		 tc_listen() function. '''
 		
 		arg_str = ""
 		arg_dict = {}
@@ -226,7 +269,7 @@ class RemoteInstrument:
 		self.log.debug(f"Initializing remote call: function = {func_name}, arguments = {arg_str} ")
 		
 		# Create GC
-		gc = GenCommand("REMCALL", {"REMOTE-ID":self.id.remote_id, "REMOTE-ADDR":self.id.remote_addr, "FUNCTION":func_name, "ARGS": arg_dict, "KWARGS": kwargs_dict})
+		gc = GenCommand("REMCALL", {"LOCAL_RCALL_ID":self.next_rcall_id(), "REMOTE-ID":self.id.remote_id, "REMOTE-ADDR":self.id.remote_addr, "FUNCTION":func_name, "ARGS": arg_dict, "KWARGS": kwargs_dict})
 		
 		# Send command to server
 		if not self.client_agent.send_command(gc):
@@ -237,11 +280,78 @@ class RemoteInstrument:
 			
 		return True
 	
+	def get_sync_reply(self, timeout_s:float=None):
+		''' Waits for a reply to be received. Can override instance's  
+		timeout `synchronous_reply_timeout_s` by setting timeout_s. If
+		timeout_s is none, uses isntance's setting. 
+		
+		Returns a tuple with index 0: True=success, False=timed-out, 
+		index 1: Return value.
+		'''
+		#TODO: Allow rcall_id and replyto_client to be checked for validity
+		
+		# Check for overridden timeout
+		if timeout_s is None:
+			timeout_s = self.synchronous_reply_timeout_s
+		
+		t0 = time.time()
+		
+		while True:
+			
+			# Check for replies on server
+			reps = self.client_agent.tc_listen()
+			
+			# Check if any replies were received
+			if len(reps) != 0:
+				break
+			
+			# Check for timeout condition
+			if time.time() - t0 > timeout_s:
+				self.log.error(f"Timed out during get_sync_reply(). This could cause synchronous mode to break!")
+				break
+			
+			# Wait and check again
+			time.sleep(self.synchronous_reply_period_s)
+		
+		if len(reps) == 0: # Nothing was found - timed-out
+			return (False, None)
+		elif len(reps) == 1: # Found exactly 1 response, synchronous mode working
+			rval = reps[0]
+			self.log.debug(f"Received synchronous response from server.", detail=f"{rval}")
+			return (True, rval)
+		else: # REceived too many responses, synchronous mode failed!
+			self.log.error(f"Received more than one response to get_sync_reply()! Synchonous mode has failed.")
+			return (True, reps[0])
+			
+	
+	def next_rcall_id(self):
+		self.last_remote_call_id += 1
+		return self.last_remote_call_id
+
 def remotefunction(func):
 	'''Decorator to allow empty functions to call
 	their remote counterparts'''
 	
 	def wrapper(self, *args, **kwargs):
+		
+		# Send remote call to instrument
 		self.remote_call(func.__name__, *args, **kwargs)
+		
+		# Get reply from instrumnet
+		gsr = self.get_sync_reply()
+		try:
+			if not gsr[0]:
+				self.log.error(f"remotefunction failed: No synchronous reply received!")
+				rval = None
+			else:
+				rval = gsr[1]
+		except Exception as e:
+			self.log.error(f"Failed to interpret response from synchronous reply.", detail=f"{e}")
+			rval = None
+			
+		# Call the source function (this should just be 'pass')
 		func(self, *args, **kwargs)
+		
+		# Retunr the value received via the network
+		return rval
 	return wrapper

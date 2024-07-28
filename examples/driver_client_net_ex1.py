@@ -53,18 +53,14 @@ if __name__ == '__main__':
 		if net_cmds is None:
 			log.error("An error occured while fetching NetworkCommands from the server.")
 		
+		# Process each command
 		for nc in net_cmds:
 			
+			# CHeck for None (Shouldn't be possible)
 			if nc is None:
 				log.warning("A 'None' snuck into the NetworkCommands list!")
 				continue
 			
-			dm.route_command(nc)
-		
-		
-	
-	# # Begin listening mode
-	# ca.begin_listener_mode()
-	
-	# # Run main function
-	# ca.forward_commands([scope1])
+			# Route command to driver and look for return value
+			status_rval = dm.route_command(nc)
+			dm.dl_reply(nc, status_rval)
