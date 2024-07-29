@@ -6,6 +6,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--local', help="Use localhost instead of intranet address.", action='store_true')
 parser.add_argument('-d', '--detail', help="Show detailed log messages.", action='store_true')
+parser.add_argument('--loglevel', help="Set the logging display level.", choices=['LOWDEBUG', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], type=str.upper)
 args = parser.parse_args()
 
 # Get desired IP address
@@ -18,6 +19,8 @@ if __name__ == '__main__':
 	
 	# Create log object
 	log = LogPile()
+	if args.loglevel is not None:
+		log.set_terminal_level(args.loglevel)
 	log.str_format.show_detail = args.detail
 	
 	# Create client agent
