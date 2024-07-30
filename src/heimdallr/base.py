@@ -1,5 +1,5 @@
 import pyvisa as pv
-from pylogfile import *
+from pylogfile.base import *
 import numpy as np
 import time
 import inspect

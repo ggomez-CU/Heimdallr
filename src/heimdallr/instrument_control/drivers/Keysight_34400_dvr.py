@@ -16,6 +16,26 @@ class Keysight34400(DigitalMultimeterCtg1):
 		
 		# Unit to make sure is matched by returned string
 		self.check_units = ""
+	
+	def set_low_power_mode(self, enable:bool, four_wire:bool=False):
+		''' If enable is true, sets the resistance measurement to be in low-power mode.'''
+		
+		# TODO: better four wire res measurmenet handling
+		if four_wire:
+			self.write(f"SENS:FRES:POW:LIM:STATE {bool_to_ONFOFF(enable)}")
+		else:
+			self.write(f"SENS:RES:POW:LIM:STATE {bool_to_ONFOFF(enable)}")
+	
+	def get_low_power_mode(self, four_wire:bool=False):
+		''' If enable is true, sets the resistance measurement to be in low-power mode.'''
+		
+		# TODO: better four wire res measurmenet handling
+		if four_wire:
+			rval = self.query(f"SENS:FRES:POW:LIM:STATE?")
+		else:
+			rval = self.query(f"SENS:RES:POW:LIM:STATE?")
+		
+		return str_to_bool(rval)
 		
 	def set_measurement(self, measurement:str, meas_range:str=DigitalMultimeterCtg1.RANGE_AUTO):
 		''' Sets the measurement, using a DitigalMultimeterCtg0 constant. 
