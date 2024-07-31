@@ -1,8 +1,6 @@
-''' Driver for Rohde & Schwarz FSQ series Spectrum Analyzers
+''' Driver for Keysight 34400 series digital multimeters. 
 
-* Only supports a single window (Referred to as Screen A in R&S documentation. The instruments supports screens A&B.)
-
-Manual: https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/f/fsq_1/FSQ_OperatingManual_en_02.pdf
+https://www.keysight.com/us/en/assets/9018-03876/service-manuals/9018-03876.pdf?success=true 
 '''
 
 import array
@@ -50,6 +48,12 @@ class Keysight34400(DigitalMultimeterCtg1):
 			case DigitalMultimeterCtg1.MEAS_RESISTANCE_4WIRE:
 				mstr = "FRES"
 				self.check_units = "OHM"
+			case DigitalMultimeterCtg1.MEAS_VOLT_AC:
+				mstr = "VOLT:AC" 
+				self.check_units = "V"
+			case DigitalMultimeterCtg1.MEAS_VOLT_DC:
+				mstr = "VOLT:DC"
+				self.check_units = "V"
 			case _:
 				self.log.error(f"Failed to interpret measurement argument '{measurement}'. Aborting.")
 				return False
