@@ -39,7 +39,7 @@ class OscilloscopeCtg1(OscilloscopeCtg0):
 	def get_waveform(self, channel:int):
 		pass
 
-class RemoteOscilloscopeCtg1(RemoteInstrument):
+class RemoteOscilloscopeCtg1(RemoteInstrument, OscilloscopeCtg1):
 	''' This class mirrors the function in OscilloscopeCtg1, but each function
 	is decorated with RemoteFunction. This lets a T/C client create RemoteInstruments
 	for this category of instrument using this class and callings its functions, rather
