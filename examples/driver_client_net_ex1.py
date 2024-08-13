@@ -4,16 +4,23 @@ import argparse
 
 # Parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-l', '--local', help="Use localhost instead of intranet address.", action='store_true')
+parser.add_argument('--ipaddr', help="Specify IP of server.")
+parser.add_argument('--port', help="Specify port to connect to on server.", type=int)
 parser.add_argument('-d', '--detail', help="Show detailed log messages.", action='store_true')
 parser.add_argument('--loglevel', help="Set the logging display level.", choices=['LOWDEBUG', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], type=str.upper)
 args = parser.parse_args()
 
-# Get desired IP address
-if args.local:
+# Select IP address
+if args.ipaddr is None:
 	ip_address = "localhost"
 else:
-	ip_address = "192.168.1.116"
+	ip_address = args.ipaddr
+
+# Select port
+if args.port is None:
+	port = 5555
+else:
+	port = int(args.port)
 
 if __name__ == '__main__':
 	
@@ -25,15 +32,12 @@ if __name__ == '__main__':
 	
 	# Create client agent
 	ca = HeimdallrClientAgent(log)
-	ca.set_addr(ip_address, 5555)
+	ca.set_addr(ip_address, port)
 	ca.connect_socket()
 	
 	# login to server with default admin password
 	ca.login("admin", "password")
 	ca.register_client_id("driver_main")
-	
-	# Create client options
-	copt = ClientOptions()
 	
 	# Create a driver manager to handle the drivers
 	dm = DriverManager(log, ca)

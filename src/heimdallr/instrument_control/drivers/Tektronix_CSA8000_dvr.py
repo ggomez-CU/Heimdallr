@@ -1,8 +1,6 @@
-''' Driver for Rohde & Schwarz FSQ series Spectrum Analyzers
+''' Tektronix CSA8000 Driver
 
-* Only supports a single window (Referred to as Screen A in R&S documentation. The instruments supports screens A&B.)
 
-Manual: https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_common_library/dl_manuals/gb_1/f/fsq_1/FSQ_OperatingManual_en_02.pdf
 '''
 
 import array

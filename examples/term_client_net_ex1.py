@@ -3,40 +3,27 @@ from heimdallr.networking.network import *
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-l', '--local', help="Use localhost instead of intranet address.", action='store_true')
+parser.add_argument('--ipaddr', help="Specify IP of server.")
+parser.add_argument('--port', help="Specify port to connect to on server.", type=int)
 parser.add_argument('-d', '--detail', help="Show detailed log messages.", action='store_true')
 parser.add_argument('--loglevel', help="Set the logging display level.", choices=['LOWDEBUG', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], type=str.upper)
 args = parser.parse_args()
 
-# Create socket - this is not protected by a mutex and should only ever be used by the main thread
-if args.local:
+# Select IP address
+if args.ipaddr is None:
 	ip_address = "localhost"
 else:
-	ip_address = "192.168.1.116"
+	ip_address = args.ipaddr
 
-# def interp_kwarg(x:str):
-# 	''' 
-	
-# 		num>  = Remainder of line will be interpreted as a float
-# 		str>  = Remainder of line is string 
-# 		dict> = Remainder of line will  be interpreted as a dict
-		
-# 		:send  = Send remote call
-# 		:abort = cancel remote call
-	
-# 	Returns a tuple with two values. Index 0: Status int, Index 1: Value
-	
-# 	Status ints:
-# 		0 = Error, index1=None
-		
-# 	'''
-	
-# 	if len(x) < 4
-	
-	
+# Select port
+if args.port is None:
+	port = 5555
+else:
+	port = int(args.port)
 
 if __name__ == '__main__':
 	
+	# Create and format log object
 	log = LogPile()
 	if args.loglevel is not None:
 		log.set_terminal_level(args.loglevel)
@@ -44,7 +31,7 @@ if __name__ == '__main__':
 	
 	# Create client agent
 	ca = HeimdallrClientAgent(log)
-	ca.set_addr(ip_address, 5555)
+	ca.set_addr(ip_address, port)
 	ca.connect_socket()
 	
 	# login to server with default admin password
