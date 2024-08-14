@@ -10,3 +10,4 @@ from heimdallr.instrument_control.drivers.RohdeSchwarz_NRP_dvr import *
 from heimdallr.instrument_control.drivers.RohdeSchwarz_FSQ_dvr import *
 from heimdallr.instrument_control.drivers.ZurichInstruments_MFLI_dvr import *
 from heimdallr.instrument_control.drivers.Keysight_34400_dvr import *
+from heimdallr.instrument_control.drivers.Tektronix_CSA8000_dvr import *

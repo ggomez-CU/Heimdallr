@@ -6,12 +6,87 @@
 import array
 from heimdallr.base import *
 from heimdallr.instrument_control.categories.spectrum_analyzer_ctg import *
+import struct
+
+# Max size of data packet to read
+TK_CSA_DRIVER_MAX_READ_LEN = 1073741824
 
 # TODO: Create CSA category
 class TektronixCSA8000(Driver):
 	
 	def __init__(self, address:str, log:LogPile):
 		super().__init__(address, log, expected_idn="TEKTRONIX,CSA8")
+	
+	def get_waveform(self,channel:int=1): 
+		'''  '''
+		
+		# Make sure trace is in range
+		count = int(max(1, min(channel, 8)))
+		if count != count:
+			self.log.error(f"Did not apply command. Instrument limits values to integers 1-8 and this range was violated.")
+			return
+		
+		# Set channel
+		self.write(f"DATA:SOURCE CH{channel}")
+
+		# Set mode to binary floating point
+		self.write("DATA:ENC FPBINARY")
+
+		# Read preamble
+
+		# Read packet --------------------------------------
+		# Packet starts with "":CURVE #<size><size2><DATA BLOCK ... >
+		#
+		#
+		
+		# Read data - ask for data
+		self.write(f"CURVE?")
+		data_raw = bytearray()
+		
+		# For this instrument, if I try to read in multiple commands it becomes
+		# unstable. If I read the entire packet in one go, it works. This tries
+		# to read 1 GB and aborts when a termination character is sent.
+		byte = self.inst.read_bytes(TK_CSA_DRIVER_MAX_READ_LEN, break_on_termchar=True)
+		data_raw += byte
+		
+		# Get size of size of packet block (ie. convert #4 -> (int)4 )
+		digits_in_size_num = int(data_raw[8:9])
+		print(f"digits in size num: {digits_in_size_num}")
+		
+		data_raw = byte
+		packet_size = int(data_raw[9:9+digits_in_size_num])
+		print(f"packet size: {packet_size}")
+		
+		self.log.debug(f"Binary fast waveform read: Expecting {packet_size} bytes for floats in packet.")
+		
+		# Instead of using array.array we have to use struct.unpack because the CSA sends
+		# data in MSB order, which is not what array.array expects.
+		#
+		# Skip first X bytes (number of elements)
+		num_points_f = packet_size/4
+		num_points = round(num_points_f)
+		if np.abs(num_points_f - num_points) > 0.01:
+			self.log.error(f"Binary read is broken!")
+		float_data = []
+		for nidx in range(num_points):
+			
+			float_data.append(struct.unpack('>f', data_raw[9+digits_in_size_num+4*nidx:13+digits_in_size_num+4*nidx]))
+		
+		# Try to get bounds
+		try:
+			x_step = float(self.query("WFMO:XINCR?").split(" ")[-1])
+			x_zero = float(self.query("WFMO:XZERO?").split(" ")[-1])
+			y_zero = float(self.query("WFMO:YZERO?").split(" ")[-1])
+		except Exception as e:
+			self.log.error(f"Failed to get waveform data: interpreting waveform metadata failed.", detail=f"{e}")
+			return None
+		
+		# Make time array
+		time_s = np.linspace(x_zero, x_zero+(num_points-1)*x_step, num_points)
+		
+		out_data = {'x':time_s, 'y':float_data, 'x_units':'S', 'y_units':'Ohms'}
+		
+		return out_data
 	
 	# def set_freq_start(self, f_Hz:float):
 	# 	self.write(f"SENS:FREQ:STAR {f_Hz} Hz")
