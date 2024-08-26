@@ -1,6 +1,11 @@
 from heimdallr.base import *
 
-class VectorNetworkAnalyzerCtg(Driver):
+class VectorNetworkAnalyzerCtg0(Driver):
+	
+	def __init__(self, address:str, log:LogPile):
+		super().__init__(address, log)
+
+class VectorNetworkAnalyzerCtg1(VectorNetworkAnalyzerCtg0):
 	
 	MEAS_S11 = "meas-s11"
 	MEAS_S21 = "meas-s21"

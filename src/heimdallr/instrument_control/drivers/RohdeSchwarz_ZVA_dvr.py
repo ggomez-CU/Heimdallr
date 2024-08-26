@@ -8,14 +8,14 @@ Manual: https://www.testworld.com/wp-content/uploads/user-guide-help-agilent-e83
 from heimdallr.base import *
 from heimdallr.instrument_control.categories.vector_network_analyzer_ctg import *
 
-class KeysightPNAE8364B(VectorNetworkAnalyzerCtg1):
+class RohdeSchwarzZVA(VectorNetworkAnalyzerCtg1):
 	
 	SWEEP_CONTINUOUS = "sweep-continuous"
 	SWEEP_SINGLE = "sweep-single"
 	SWEEP_OFF = "sweep-off"
 	
 	def __init__(self, address:str, log:LogPile):
-		super().__init__(address, log)
+		super().__init__(address, log, expected_idn="Rohde&Schwarz,ZVA")
 		
 		self.trace_lookup = {}
 		
@@ -81,48 +81,61 @@ class KeysightPNAE8364B(VectorNetworkAnalyzerCtg1):
 		# Create a trace and assoc. with measurement
 		self.write(f"DISP:WIND:TRAC{trace}:FEED '{trace_name}'")
 	
-	def get_trace_data(self, channel:int, trace:int):
+	def send_update_display(self):
+		self.write(f"SYSTEM:DISPLAY:UPDATE ONCE")
+	
+	def get_channel_data(self, channel:int):
 		
-		# Check that trace exists
-		if trace not in self.trace_lookup.keys():
-			self.log.error(f"Trace number {trace} does not exist!")
-			return
+		self.log.warning(f"Binary transfer not implemented. Defaulting to slower ASCII.")
 		
-		trace_name = self.trace_lookup[trace]
+		# # Check that trace exists
+		# if trace not in self.trace_lookup.keys():
+		# 	self.log.error(f"Trace number {trace} does not exist!")
+		# 	return
 		
-		# Select the specified measurement/trace
-		self.write(f"CALC{channel}:PAR:SEL {trace_name}")
+		# trace_name = self.trace_lookup[trace]
 		
-		# Set data format
-		self.write(f"FORM:DATA REAL,64")
+		# # Select the specified measurement/trace
+		# self.write(f"CALC{channel}:PAR:SEL {trace_name}")
+		
+		# # Set data format
+		# self.write(f"FORM:DATA REAL,64")
+		
+		self.write(f"CALCULATE{channel}:FORMAT REAL")
+		real_data = self.query(f"CALC{channel}:DATA? FDATA")
+		self.write(f"CALCULATE{channel}:FORMAT IMAG")
+		imag_data = self.query(f"CALC{channel}:DATA? FDATA")
+		real_tokens = real_data.split(",")
+		imag_tokens = imag_data.split(",")
+		trace = [complex(float(re), float(im)) for re, im in zip(real_tokens, imag_tokens)]
 		
 		# Query data
 		return self.query(f"CALC{channel}:DATA? SDATA")
 		
-	def set_continuous_trigger(self, enable:bool):
-		self.write(f"INIT:CONT {bool_to_ONFOFF(enable)}")
-	def get_continuous_trigger(self):
-		return str_to_bool(self.query(f"INIT:CONT?"))
+	# def set_continuous_trigger(self, enable:bool):
+	# 	self.write(f"INIT:CONT {bool_to_ONFOFF(enable)}")
+	# def get_continuous_trigger(self):
+	# 	return str_to_bool(self.query(f"INIT:CONT?"))
 	
-	def send_manual_trigger(self):
-		self.write(f"INIT:IMM")
+	# def send_manual_trigger(self):
+	# 	self.write(f"INIT:IMM")
 		
-	def set_averaging_enable(self, enable:bool, channel:int=1):
-		self.write(f"SENS{channel}:AVER {bool_to_ONFOFF(enable)}")
-	def get_averaging_enable(self, channel:int=1):
-		return str_to_bool(self.write(f"SENS{channel}:AVER?"))
+	# def set_averaging_enable(self, enable:bool, channel:int=1):
+	# 	self.write(f"SENS{channel}:AVER {bool_to_ONFOFF(enable)}")
+	# def get_averaging_enable(self, channel:int=1):
+	# 	return str_to_bool(self.write(f"SENS{channel}:AVER?"))
 	
-	def set_averaging_count(self, count:int, channel:int=1):
-		count = int(max(1, min(count, 65536)))
-		if count != count:
-			self.log.error(f"Did not apply command. Instrument limits values to integers 1-65536 and this range was violated.")
-			return
-		self.write(f"SENS{channel}:AVER:COUN {count}")
-	def get_averaging_count(self, channel:int=1):
-		return int(self.query(f"SENS{channel}:AVER:COUN?"))
+	# def set_averaging_count(self, count:int, channel:int=1):
+	# 	count = int(max(1, min(count, 65536)))
+	# 	if count != count:
+	# 		self.log.error(f"Did not apply command. Instrument limits values to integers 1-65536 and this range was violated.")
+	# 		return
+	# 	self.write(f"SENS{channel}:AVER:COUN {count}")
+	# def get_averaging_count(self, channel:int=1):
+	# 	return int(self.query(f"SENS{channel}:AVER:COUN?"))
 	
-	def send_clear_averaging(self, channel:int=1):
-		self.write(f"SENS{channel}:AVER:CLE")
+	# def send_clear_averaging(self, channel:int=1):
+	# 	self.write(f"SENS{channel}:AVER:CLE")
 	
-	def send_preset(self):
-		self.write("SYST:PRES")
+	# def send_preset(self):
+	# 	self.write("SYST:PRES")
