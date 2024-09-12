@@ -341,7 +341,11 @@ def interpret_range(rd:dict, print_err=False):
 	* Dictionary must contain a key 'unit' specifying a string with the unit.
 	* If type=list, dictionary must contain key 'values' with a list of each value to include.
 	* If type=range, dictionary must contain keys start, end, and step each with a float value
-	  specifying the iteration conditions for the list.
+	  specifying the iteration conditions for the list. Can include optional parameter 'delta'
+	  which accepts a list of floats. For each value in the primary range definition, it will
+	  also include values relative to the original value by each delta value. For example, if
+	  the range specifies 10 to 20 in steps of one, and deltas = [-.1, 0.05], the final resulting
+	  list will be 10, 10.05, 10.9, 11, 11.05, 11.9, 12, 12.05... and so on.
 	
 	Example list dict (in JSON format):
 		 {
@@ -357,6 +361,16 @@ def interpret_range(rd:dict, print_err=False):
 			"start": 9.8e9,
 			"step": 1e6,
 			"end": 10.2e9
+		}
+	
+	Example range dict (in JSON format): Deltas parameter will add points at each step 100 KHz below each point and 10 KHz above to check derivative.
+		{
+			"type": "range",
+			"unit": "Hz",
+			"start": 9.8e9,
+			"step": 1e6,
+			"end": 10.2e9,
+			"deltas": [-100e3, 10e3]
 		}
 	
 	'''
@@ -408,6 +422,29 @@ def interpret_range(rd:dict, print_err=False):
 			vals = np.array(range(start, end, step))/1e6
 			
 			vals = list(vals)
+			
+			# Check if delta parameter is defined
+			if 'deltas' in rd.keys():
+				deltas = rd['deltas']
+				
+				# Add delta values
+				new_vals = []
+				for v in vals:
+					
+					new_vals.append(v)
+					
+					# Apply each delta
+					for dv in deltas:
+						print(v+dv)
+						if (v+dv >= rd['start']) and (v+dv <= rd['end']):
+							print("  -->")
+							new_vals.append(v+dv)
+						else:
+							print("  -X")
+					
+				# Check for an remove duplicates - assign to vals
+				vals = list(set(new_vals))
+				vals.sort()
 			
 		except Exception as e:
 			if print_err:
