@@ -437,10 +437,10 @@ def interpret_range(rd:dict, print_err=False):
 					for dv in deltas:
 						print(v+dv)
 						if (v+dv >= rd['start']) and (v+dv <= rd['end']):
-							print("  -->")
+							# print("  -->")
 							new_vals.append(v+dv)
-						else:
-							print("  -X")
+						# else:
+						# 	print("  -X")
 					
 				# Check for an remove duplicates - assign to vals
 				vals = list(set(new_vals))

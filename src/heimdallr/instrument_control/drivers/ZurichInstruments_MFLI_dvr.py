@@ -70,6 +70,7 @@ class ZurichInstrumentsMFLI(LockInAmplifierCtg):
 	
 	def set_offset(self, offset_V:float):
 		''' Sets the offset of the signal output '''
+		self.log.debug(f"MFLI Driver setting offset to voltage: {offset_V} V")
 		self.inst.setDouble(f'/{self.dev_sn}/sigouts/0/offset', offset_V)
 	
 	def set_output_enable(self, enable:bool):
