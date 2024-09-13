@@ -435,7 +435,7 @@ def interpret_range(rd:dict, print_err=False):
 					
 					# Apply each delta
 					for dv in deltas:
-						print(v+dv)
+						# print(v+dv)
 						if (v+dv >= rd['start']) and (v+dv <= rd['end']):
 							# print("  -->")
 							new_vals.append(v+dv)
