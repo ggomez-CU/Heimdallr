@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from socket import getaddrinfo, gethostname
 import ipaddress
 import fnmatch
-
+import matplotlib.pyplot as plt
 
 def get_ip(ip_addr_proto="ipv4", ignore_local_ips=True):
 	# By default, this method only returns non-local IPv4 addresses
@@ -332,6 +332,35 @@ def s2hms(seconds):
 	
 	return (hours, min, seconds)
 
+def plot_spectrum(spectrum:dict, marker='.', linestyle=':', color=(0, 0, 0.7), autoshow=True):
+	''' Plots a spectrum dictionary, as returned by the Spectrum Analyzer drivers.
+	
+	Expects keys:
+		* x: X data list (float)
+		* y: Y data list (float)
+		* x_units: Units of x-axis
+		* y_units: Units of y-axis
+	
+	
+	'''
+	
+	x_val = spectrum['x']
+	x_unit = spectrum['x_units']
+	if spectrum['x_units'] == "Hz":
+		x_unit = "Frequency (GHz)"
+		x_val = np.array(spectrum['x'])/1e9
+	
+	y_unit = spectrum['y_units']
+	if y_unit == "dBm":
+		y_unit = "Power (dBm)"
+	
+	plt.plot(x_val, spectrum['y'], marker=marker, linestyle=linestyle, color=color)
+	plt.xlabel(x_unit)
+	plt.ylabel(y_unit)
+	plt.grid(True)
+	
+	if autoshow:
+		plt.show()
 
 def interpret_range(rd:dict, print_err=False):
 	''' Accepts a dictionary defining a sweep list/range, and returns a list of the values. Returns none
