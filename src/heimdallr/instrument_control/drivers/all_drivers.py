@@ -8,6 +8,7 @@ from heimdallr.instrument_control.drivers.RohdeSchwarz_FSE_dvr import *
 from heimdallr.instrument_control.drivers.RohdeSchwarz_NRX_dvr import *
 from heimdallr.instrument_control.drivers.RohdeSchwarz_NRP_dvr import *
 from heimdallr.instrument_control.drivers.RohdeSchwarz_FSQ_dvr import *
+from heimdallr.instrument_control.drivers.RohdeSchwarz_FSV_dvr import *
 from heimdallr.instrument_control.drivers.RohdeSchwarz_ZVA_dvr import *
 from heimdallr.instrument_control.drivers.ZurichInstruments_MFLI_dvr import *
 from heimdallr.instrument_control.drivers.Keysight_34400_dvr import *
