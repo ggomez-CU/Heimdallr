@@ -1,7 +1,3 @@
-<h1 align="center">
-<img src="https://github.com/Grant-Giesbrecht/heimdallr/blob/main/docs/images/heimdallr_banner.png?raw=True" width="800">
-</h1><br>
-
 Heimdallr offers a better way of implementing instrument control and scripting. It does this through a series of core features:
 
 - In addition to providing a **base set of instrument drivers**, it enforces a convention such that drivers for different instrument models of the same 'type' (eg. two different models of 2-channel oscilloscope) are **guaranteed to use the same API**. This greatly simplifies script writing, and prevents your scripts from becoming bound to one specific instrument model. 
