@@ -2,8 +2,6 @@
 <img src="https://github.com/Grant-Giesbrecht/heimdallr/blob/main/docs/images/heimdallr_logo.png?raw=True" width="500">
 </h1><br>
 
-# Overview
-
 Heimdallr is a package for simplifying instrument control. It is designed to build
 off of libraries like [pyvisa](https://github.com/pyvisa/pyvisa) and [pyvisa-py](https://github.com/pyvisa/pyvisa-py)
 and provide a complete ecosystem for instrument automation. As a brief example of
