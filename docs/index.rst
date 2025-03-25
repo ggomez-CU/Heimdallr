@@ -13,7 +13,6 @@ here's an example script which connects to an instrument, resets it, then adjust
 some basic settings:
 
 .. code-block: python
-	:linenos:
 	
 	from heimdallr.all import *
 	
