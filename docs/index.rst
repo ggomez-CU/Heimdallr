@@ -54,7 +54,7 @@ a collection of driver classes. Some of its key features include:
 - **(Work in progress) GUIs:** GUI widgets for specific instrument categories make it easy to control 
   or monitor your experiments.
 
-installation
+Installation
 ============
 
 Heimdallr can be installed via pip using 
