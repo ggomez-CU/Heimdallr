@@ -6,7 +6,29 @@
 Welcome to Heimdallr's documentation!
 =====================================
 
-This is where text should go explaining what the repo does.
+Heimdallr is a package for simplifying instrument control. It is designed to build
+off of libraries like `pyvisa`_ and `pyvisa-py`_ and provide a complete ecosystem for 
+instrument automation. As a brief example of what this can look like in its simplest form, 
+here's an example script which connects to an instrument, resets it, then adjusts and reads 
+some basic settings:
+
+.. code-block: python
+	:linenos:
+	
+	from heimdallr.all import *
+	
+	# Create log object
+	log = LogPile()
+	
+	# Create NRX Driver
+	nrx = RohdeSchwarzNRX("TCPIP0::192.168.0.10::INSTR", log)
+	
+	# Preset device
+	nrx.preset()
+	
+	# Get meas frequency
+	nrx.set_meas_frequency(1e9)
+	fmeas = nrx.get_meas_frequency()
 
 This is how you can link to the `GitHub`_ or `PyPI`_.
 
@@ -35,6 +57,8 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. _pyvisa-py: https://github.com/pyvisa/pyvisa-py
+.. _pyvisa: https://github.com/pyvisa/pyvisa
 .. _GitHub: https://github.com/Grant-Giesbrecht/Heimdallr
 .. _PyPI: https://pypi.org/project/heimdallr-py/
 .. _what_and_why: https://pypi.org/project/heimdallr-py/
