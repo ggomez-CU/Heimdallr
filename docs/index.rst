@@ -12,7 +12,8 @@ instrument automation. As a brief example of what this can look like in its simp
 here's an example script which connects to an instrument, resets it, then adjusts and reads 
 some basic settings:
 
-.. code-block: python
+.. code-block:: python
+	:linenos:
 	
 	from heimdallr.all import *
 	
