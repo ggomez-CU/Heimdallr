@@ -3,8 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Heimdallr's documentation!
-=====================================
+.. image:: images/heimdallr_logo.png
+    :target: GitHub_
+    :width: 500
+    :align: center
 
 Heimdallr is a package for simplifying instrument control. It is designed to build
 off of libraries like `pyvisa`_ and `pyvisa-py`_ and provide a complete ecosystem for 
@@ -29,6 +31,9 @@ some basic settings:
 	# Get meas frequency
 	nrx.set_meas_frequency(1e9)
 	fmeas = nrx.get_meas_frequency()
+
+Links
+=====
 
 This is how you can link to the `GitHub`_ or `PyPI`_.
 
