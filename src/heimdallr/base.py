@@ -8,6 +8,7 @@ from socket import getaddrinfo, gethostname
 import ipaddress
 import fnmatch
 import matplotlib.pyplot as plt
+from pylogfile.base import *
 
 def get_ip(ip_addr_proto="ipv4", ignore_local_ips=True):
 	# By default, this method only returns non-local IPv4 addresses
