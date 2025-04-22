@@ -269,10 +269,10 @@ class Driver(ABC):
 			
 		try:
 			self.inst.write(cmd)
+			self.lowdebug(f"Wrote to instrument: >{cmd}<")
 		except Exception as e:
 			self.error(f"Failed to write to instrument {self.address}. ({e})")
 			self.online = False
-		
 	def id_str(self):
 		pass
 	
@@ -288,7 +288,9 @@ class Driver(ABC):
 			self.warning(f"Cannot write when offline. ()")
 		
 		try:
-			return self.inst.write()
+			rv = self.inst.read()
+			self.lowdebug(f"Read from instrument: >:a{rv}<")
+			return rv
 		except Exception as e:
 			self.error(f"Failed to read from instrument {self.address}. ({e})")
 			self.online = False
@@ -306,7 +308,8 @@ class Driver(ABC):
 			self.warning(f"Cannot write when offline. ()")
 		
 		try:
-			return self.inst.query(cmd)
+			rv = self.inst.query(cmd)
+			self.lowdebug(f"Queried instrument, >{cmd}<, receiving >:a{rv}<.")
 		except Exception as e:
 			self.error(f"Failed to query instrument {self.address}. ({e})")
 			self.online = False
