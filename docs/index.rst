@@ -45,9 +45,9 @@ a collection of driver classes. Some of its key features include:
   over an AES-encrypted network. Typically one client would interface with the instrument 
   drivers, while the other clients can be used to monitor or adjust experiments remotely.
 - **Autmoatic Rich Logging:** Because Heimdallr's core use-case concerns scientific 
-  experiments, robust and thorough logging is crucial. Heimdallr automates this via the[pylogfile](https://pypi.org/project/pylogfile/).
+  experiments, robust and thorough logging is crucial. Heimdallr automates this via the `pylogfile`_ library.
   library and records every command sent to the instruments. Logs can be saved in the
-  binary and open-source HDF format, which can be viewed and analyzed usign the `lumberjack` command line tool.
+  binary and open-source HDF format, which can be viewed and analyzed usign the :code:`lumberjack` command line tool.
 - **Ease of Creating New Drivers:** The instrument category classes automate much of the 
   work involved in creating a driver, meaning you only need to focus on finding the right
   SCPI commands to create any new drivers you need.
@@ -67,11 +67,6 @@ Links
 =====
 
 This is how you can link to the `GitHub`_ or `PyPI`_.
-
-You can add bullets like this: 
-
-* Bullet 1
-* Bullet 2 
 
 Documentation
 =============
@@ -99,3 +94,4 @@ Indices and tables
 .. _GitHub: https://github.com/Grant-Giesbrecht/Heimdallr
 .. _PyPI: https://pypi.org/project/heimdallr-py/
 .. _what_and_why: https://pypi.org/project/heimdallr-py/
+.. _pylogfile: https://github.com/Grant-Giesbrecht/pylogfile
