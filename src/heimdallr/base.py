@@ -129,22 +129,22 @@ class Driver(ABC):
 		self.connect()
 	
 	def lowdebug(self, message:str, detail:str=""):
-		self.log.lowdebug(f"(Driver: >:q{self.id.short_str}<) {message}", detail=f"({self.id}) {detail}")
+		self.log.lowdebug(f"(Driver: >:q{self.id.short_str()}<) {message}", detail=f"({self.id}) {detail}")
 	
 	def debug(self, message:str, detail:str=""):
-		self.log.debug(f"(Driver: >:q{self.id.short_str}<) {message}", detail=f"({self.id}) {detail}")
+		self.log.debug(f"(Driver: >:q{self.id.short_str()}<) {message}", detail=f"({self.id}) {detail}")
 	
 	def info(self, message:str, detail:str=""):
-		self.log.info(f"(Driver: >:q{self.id.short_str}<) {message}", detail=f"({self.id}) {detail}")
+		self.log.info(f"(Driver: >:q{self.id.short_str()}<) {message}", detail=f"({self.id}) {detail}")
 	
 	def warning(self, message:str, detail:str=""):
-		self.log.warning(f"(Driver: >:q{self.id.short_str}<) {message}", detail=f"({self.id}) {detail}")
+		self.log.warning(f"(Driver: >:q{self.id.short_str()}<) {message}", detail=f"({self.id}) {detail}")
 	
 	def error(self, message:str, detail:str=""):
-		self.log.error(f"(Driver: >:q{self.id.short_str}<) {message}", detail=f"({self.id}) {detail}")
+		self.log.error(f"(Driver: >:q{self.id.short_str()}<) {message}", detail=f"({self.id}) {detail}")
 		
 	def critical(self, message:str, detail:str=""):
-		self.log.critical(f"(Driver: >:q{self.id.short_str}<) {message}", detail=f"({self.id}) {detail}")
+		self.log.critical(f"(Driver: >:q{self.id.short_str()}<) {message}", detail=f"({self.id}) {detail}")
 	
 	def connect(self, check_id:bool=True):
 		
